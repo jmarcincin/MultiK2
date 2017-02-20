@@ -169,9 +169,8 @@ namespace MultiK2
                     MediaFrameSource depthSource;
                     if (_mediaCapture.FrameSources.TryGetValue(depthSourceInfo.Id, out depthSource))
                     {
-                        var intrinsics = depthSource.TryGetCameraIntrinsics(depthSource.CurrentFormat);
                         var depthMediaReader = await _mediaCapture.CreateFrameReaderAsync(depthSource);
-                        _depthReader = new DepthFrameReader(this, depthSource, depthMediaReader);
+                        _depthReader = new DepthFrameReader(this, depthMediaReader);
                     }
                     else
                     {

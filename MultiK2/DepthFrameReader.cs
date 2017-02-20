@@ -20,7 +20,7 @@ namespace MultiK2
                 
         public Sensor Sensor { get; }
 
-        internal DepthFrameReader(Sensor sensor, MediaFrameSource depthSource, MediaFrameReader depthReader)
+        internal DepthFrameReader(Sensor sensor, MediaFrameReader depthReader)
         {
             Sensor = sensor;
             _depthReader = depthReader;            
