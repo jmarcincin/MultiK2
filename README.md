@@ -1,4 +1,7 @@
 # MultiK2
+[API preview] 
+Not for production use 
+
 Kinect 2 library for UWP and .NET with support for sensors connected over-the-network.
 
 
