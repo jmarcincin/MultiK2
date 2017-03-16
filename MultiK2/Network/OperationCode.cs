@@ -6,11 +6,19 @@ using System.Threading.Tasks;
 
 namespace MultiK2.Network
 {
-    enum OperationCode
+    internal enum OperationCode
     {
-        OpenReader = 0x01,
-        CloseReader = 0x02,
-        FrameTransfer = 0x03,
-        CloseSensor = 0x04,        
+        OpenReader = 1,
+        CloseReader = 2,
+        CloseSensor = 3,
+
+        BodyFrameTransfer = 16,
+        DepthFrameTransfer = 17,
+        ColorFrameTransfer = 18,
+        BodyIndexFrameTransfer = 19,
+        AudioFrameTransfer = 20,
+        InfraredFrameTransfer = 21,
+        Infrared2FrameTrasfer = 22,
+        UserFrameTransfer = 23,
     }
 }

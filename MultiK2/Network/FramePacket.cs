@@ -7,15 +7,17 @@ using Windows.Storage.Streams;
 
 namespace MultiK2.Network
 {
-    abstract class FramePacket
+    internal abstract class FramePacket
     {
-        public ReaderType Type { get; }
+        public ReaderType FrameType { get; }
 
         protected FramePacket(ReaderType type)
         {
-            Type = type;
+            FrameType = type;
         }
 
-        public abstract Task<bool> WriteData(DataWriter writer);
+        public abstract bool WriteData(DataWriter writer);
+
+        public abstract Task<bool> ReadDataAsync(DataReader reader);
     }
 }

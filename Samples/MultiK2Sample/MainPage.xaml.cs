@@ -54,7 +54,7 @@ namespace MultiK2Sample
         private async void Application_EnteredBackground(object sender, Windows.ApplicationModel.EnteredBackgroundEventArgs e)
         {
             var deferral = e.GetDeferral();
-            _kinectSensor?.CloseAsync();
+            await _kinectSensor?.CloseAsync();
             deferral.Complete();
         }
         

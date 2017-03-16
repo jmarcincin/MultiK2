@@ -28,7 +28,7 @@
     <DefineConstants>DEBUG;TRACE;NETFX_CORE;WINDOWS_UWP</DefineConstants>
     <NoWarn>;2008</NoWarn>
     <DebugType>full</DebugType>
-    <PlatformTarget>x86</PlatformTarget>
+    <PlatformTarget>AnyCPU</PlatformTarget>
     <UseVSHostingProcess>false</UseVSHostingProcess>
     <ErrorReport>prompt</ErrorReport>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
@@ -40,7 +40,7 @@
     <Optimize>true</Optimize>
     <NoWarn>;2008</NoWarn>
     <DebugType>pdbonly</DebugType>
-    <PlatformTarget>x86</PlatformTarget>
+    <PlatformTarget>AnyCPU</PlatformTarget>
     <UseVSHostingProcess>false</UseVSHostingProcess>
     <ErrorReport>prompt</ErrorReport>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
@@ -52,7 +52,7 @@
     <DefineConstants>DEBUG;TRACE;NETFX_CORE;WINDOWS_UWP</DefineConstants>
     <NoWarn>;2008</NoWarn>
     <DebugType>full</DebugType>
-    <PlatformTarget>ARM</PlatformTarget>
+    <PlatformTarget>AnyCPU</PlatformTarget>
     <UseVSHostingProcess>false</UseVSHostingProcess>
     <ErrorReport>prompt</ErrorReport>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
@@ -64,7 +64,7 @@
     <Optimize>true</Optimize>
     <NoWarn>;2008</NoWarn>
     <DebugType>pdbonly</DebugType>
-    <PlatformTarget>ARM</PlatformTarget>
+    <PlatformTarget>AnyCPU</PlatformTarget>
     <UseVSHostingProcess>false</UseVSHostingProcess>
     <ErrorReport>prompt</ErrorReport>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
@@ -76,7 +76,7 @@
     <DefineConstants>DEBUG;TRACE;NETFX_CORE;WINDOWS_UWP</DefineConstants>
     <NoWarn>;2008</NoWarn>
     <DebugType>full</DebugType>
-    <PlatformTarget>x64</PlatformTarget>
+    <PlatformTarget>AnyCPU</PlatformTarget>
     <UseVSHostingProcess>false</UseVSHostingProcess>
     <ErrorReport>prompt</ErrorReport>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
@@ -88,7 +88,7 @@
     <Optimize>true</Optimize>
     <NoWarn>;2008</NoWarn>
     <DebugType>pdbonly</DebugType>
-    <PlatformTarget>x64</PlatformTarget>
+    <PlatformTarget>AnyCPU</PlatformTarget>
     <UseVSHostingProcess>false</UseVSHostingProcess>
     <ErrorReport>prompt</ErrorReport>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
@@ -103,6 +103,12 @@
     <Compile Include="BodyIndexFrameReader.cs" />
     <Compile Include="CameraIntrinsics.cs" />
     <Compile Include="CoordinateMapper.cs" />
+    <Compile Include="Network\BodyFramePacket.cs" />
+    <Compile Include="Network\INetworkCommandAsync.cs" />
+    <Compile Include="Network\NetworkBase.cs" />
+    <Compile Include="Network\NetworkClient.cs" />
+    <Compile Include="Network\NetworkServer.cs" />
+    <Compile Include="Network\NetworkStatusExtensions.cs" />
     <Compile Include="RuntimeImports.cs" />
     <Compile Include="Network\CloseReader.cs" />
     <Compile Include="Network\DepthFramePacket.cs" />
@@ -110,9 +116,8 @@
     <Compile Include="Network\OpenReader.cs" />
     <Compile Include="Network\HelloPacket.cs" />
     <Compile Include="Network\OperationCode.cs" />
-    <Compile Include="Network\OperationType.cs" />
+    <Compile Include="Network\OperationStatus.cs" />
     <Compile Include="ReaderConfig.cs" />
-    <Compile Include="SensorNetwork.cs" />
     <Compile Include="SensorType.cs" />
     <Compile Include="Tracking\Body.cs" />
     <Compile Include="Tracking\BodyFrame.cs" />

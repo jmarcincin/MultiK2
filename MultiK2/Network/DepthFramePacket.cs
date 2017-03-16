@@ -19,11 +19,13 @@ namespace MultiK2.Network
                 
         private uint _offset;
 
-        public SoftwareBitmap Frame { get; }
+        public SoftwareBitmap Bitmap { get; }
 
-        public DepthFramePacket() : base(ReaderType.Depth)
+        public DepthFramePacket(SoftwareBitmap depthBitmap) : base(ReaderType.Depth)
         {
-            using (var buffer = Frame.LockBuffer(BitmapBufferAccessMode.Read))
+            Bitmap = depthBitmap;
+
+            using (var buffer = Bitmap.LockBuffer(BitmapBufferAccessMode.Read))
             using (var bufferRef = buffer.CreateReference())
             {
                 unsafe
@@ -50,23 +52,21 @@ namespace MultiK2.Network
             }
         }
 
-        public override async Task<bool> WriteData(DataWriter writer)
+        public override bool WriteData(DataWriter writer)
         {
             if (_dataBuffer == null)
             {
                 // TODO: semaphore impl - sending in chunks
                 
-                writer.WriteInt32((int)OperationCode.FrameTransfer);
-                writer.WriteInt32((int)OperationType.PushInit);
-                writer.WriteInt32((int)Type);
-                writer.WriteInt32((int)Frame.BitmapPixelFormat);
-                writer.WriteInt32(Frame.PixelWidth);
-                writer.WriteInt32(Frame.PixelHeight);
+                writer.WriteInt32((int)OperationCode.DepthFrameTransfer);
+                writer.WriteInt32((int)OperationStatus.PushInit);
+                writer.WriteInt32((int)Bitmap.BitmapPixelFormat);
+                writer.WriteInt32(Bitmap.PixelWidth);
+                writer.WriteInt32(Bitmap.PixelHeight);
                 writer.WriteInt32(_data.Length);
 
                 // todo write coordinte mapper transformations
-                await writer.FlushAsync();
-
+                
                 return false;
             }
 
@@ -83,6 +83,11 @@ namespace MultiK2.Network
             await writer.FlushAsync();
             */
             return false;
+        }
+
+        public override Task<bool> ReadDataAsync(DataReader reader)
+        {
+            throw new NotImplementedException();
         }
     }
 }

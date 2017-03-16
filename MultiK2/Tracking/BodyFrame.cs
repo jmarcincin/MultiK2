@@ -16,14 +16,12 @@ namespace MultiK2.Tracking
         private static Guid PoseSetBodyTracking = new Guid(0x84520b1f, 0xab61, 0x46da, 0xab, 0x1d, 0xe0, 0x13, 0x40, 0xef, 0x88, 0x4e);
         private static Guid PoseSetHandTracking = new Guid(0xf142c82c, 0x3a57, 0x4e7d, 0x81, 0x59, 0x98, 0xbd, 0xbd, 0x6c, 0xcf, 0xe2);
 
-        public static BodyFrame Parse(MediaFrameReference bodyDataFrame)
+        internal static BodyFrame Parse(byte[] bodyBinaryData, TimeSpan? systemRelativeTime)
         {
-            var dataBuffer = bodyDataFrame.BufferMediaFrame.Buffer;
             Body[] bodyData;
-            var ms = dataBuffer.AsStream();
+            var ms = new MemoryStream(bodyBinaryData);
             using (var reader = new BinaryReader(ms))
             {
-
                 var customTypeGuid = new Guid(reader.ReadBytes(16));
                 var entityCount = reader.ReadUInt32();
 
@@ -81,11 +79,6 @@ namespace MultiK2.Tracking
                     var leanVector = new Vector2(reader.ReadSingle(), reader.ReadSingle());
                     var leanState = (TrackingState)reader.ReadInt32();
 
-                    if (isTracked)
-                    {
-
-                    }
-
                     bodyData[bodyIdx] = new Body(
                         jointData,
                         entityId,
@@ -99,17 +92,30 @@ namespace MultiK2.Tracking
                         clip);
                 }
             }
-            return new BodyFrame(bodyData, bodyDataFrame.SystemRelativeTime);
+            
+            return new BodyFrame(bodyData, systemRelativeTime, bodyBinaryData);
+        }
+
+        internal static BodyFrame Parse(MediaFrameReference bodyDataFrame)
+        {
+            var dataBuffer = bodyDataFrame.BufferMediaFrame.Buffer;
+            var binaryBodies = new byte[dataBuffer.Length];
+            dataBuffer.AsStream().Read(binaryBodies, 0, binaryBodies.Length);
+
+            return Parse(binaryBodies, bodyDataFrame.SystemRelativeTime);
         }
 
         public Body[] Bodies { get; }
 
         public TimeSpan? SystemRelativeTime { get; }
 
-        internal BodyFrame(Body[] bodyData, TimeSpan? relativeTime)
+        internal byte[] BinaryData { get; }
+
+        internal BodyFrame(Body[] bodyData, TimeSpan? relativeTime, byte[] binaryBodies)
         {
             Bodies = bodyData;
             SystemRelativeTime = relativeTime;
+            BinaryData = binaryBodies;
         }
     }
 }

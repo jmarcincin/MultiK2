@@ -24,7 +24,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <DebugType>full</DebugType>
-    <PlatformTarget>x64</PlatformTarget>
+    <PlatformTarget>AnyCPU</PlatformTarget>
     <ErrorReport>prompt</ErrorReport>
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
@@ -33,7 +33,7 @@
     <DefineConstants>TRACE</DefineConstants>
     <Optimize>true</Optimize>
     <DebugType>pdbonly</DebugType>
-    <PlatformTarget>x64</PlatformTarget>
+    <PlatformTarget>AnyCPU</PlatformTarget>
     <ErrorReport>prompt</ErrorReport>
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
@@ -44,7 +44,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <DebugType>full</DebugType>
-    <PlatformTarget>x86</PlatformTarget>
+    <PlatformTarget>AnyCPU</PlatformTarget>
     <ErrorReport>prompt</ErrorReport>
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
@@ -53,7 +53,7 @@
     <DefineConstants>TRACE</DefineConstants>
     <Optimize>true</Optimize>
     <DebugType>pdbonly</DebugType>
-    <PlatformTarget>x86</PlatformTarget>
+    <PlatformTarget>AnyCPU</PlatformTarget>
     <ErrorReport>prompt</ErrorReport>
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
@@ -64,7 +64,7 @@
     <Reference Include="System.Numerics.Vectors" />
     <Reference Include="System.Runtime.WindowsRuntime, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\..\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETCore\v4.5\System.Runtime.WindowsRuntime.dll</HintPath>
+      <HintPath>$(MSBuildProgramFiles32)\Reference Assemblies\Microsoft\Framework\.NETCore\v4.5\System.Runtime.WindowsRuntime.dll</HintPath>
     </Reference>
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
@@ -73,7 +73,7 @@
     <Reference Include="System.Net.Http" />
     <Reference Include="System.Xml" />
     <Reference Include="Windows">
-      <HintPath>..\..\..\..\..\Program Files (x86)\Windows Kits\10\UnionMetadata\Windows.winmd</HintPath>
+      <HintPath>$(MSBuildProgramFiles32)\Windows Kits\10\UnionMetadata\Windows.winmd</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
@@ -98,8 +98,44 @@
     <Compile Include="..\MultiK2\DepthFrameReader.cs">
       <Link>DepthFrameReader.cs</Link>
     </Compile>
+    <Compile Include="..\MultiK2\Network\BodyFramePacket.cs">
+      <Link>Network\BodyFramePacket.cs</Link>
+    </Compile>
+    <Compile Include="..\MultiK2\Network\CloseReader.cs">
+      <Link>Network\CloseReader.cs</Link>
+    </Compile>
+    <Compile Include="..\MultiK2\Network\DepthFramePacket.cs">
+      <Link>Network\DepthFramePacket.cs</Link>
+    </Compile>
+    <Compile Include="..\MultiK2\Network\FramePacket.cs">
+      <Link>Network\FramePacket.cs</Link>
+    </Compile>
     <Compile Include="..\MultiK2\Network\HelloPacket.cs">
       <Link>Network\HelloPacket.cs</Link>
+    </Compile>
+    <Compile Include="..\MultiK2\Network\INetworkCommandAsync.cs">
+      <Link>Network\INetworkCommandAsync.cs</Link>
+    </Compile>
+    <Compile Include="..\MultiK2\Network\NetworkBase.cs">
+      <Link>Network\NetworkBase.cs</Link>
+    </Compile>
+    <Compile Include="..\MultiK2\Network\NetworkClient.cs">
+      <Link>Network\NetworkClient.cs</Link>
+    </Compile>
+    <Compile Include="..\MultiK2\Network\NetworkServer.cs">
+      <Link>Network\NetworkServer.cs</Link>
+    </Compile>
+    <Compile Include="..\MultiK2\Network\NetworkStatusExtensions.cs">
+      <Link>Network\NetworkStatusExtensions.cs</Link>
+    </Compile>
+    <Compile Include="..\MultiK2\Network\OpenReader.cs">
+      <Link>Network\OpenReader.cs</Link>
+    </Compile>
+    <Compile Include="..\MultiK2\Network\OperationCode.cs">
+      <Link>Network\OperationCode.cs</Link>
+    </Compile>
+    <Compile Include="..\MultiK2\Network\OperationStatus.cs">
+      <Link>Network\OperationStatus.cs</Link>
     </Compile>
     <Compile Include="..\MultiK2\ReaderConfig.cs">
       <Link>ReaderConfig.cs</Link>
@@ -109,9 +145,6 @@
     </Compile>
     <Compile Include="..\MultiK2\Sensor.cs">
       <Link>Sensor.cs</Link>
-    </Compile>
-    <Compile Include="..\MultiK2\SensorNetwork.cs">
-      <Link>SensorNetwork.cs</Link>
     </Compile>
     <Compile Include="..\MultiK2\SensorType.cs">
       <Link>SensorType.cs</Link>

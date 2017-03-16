@@ -6,9 +6,9 @@ using System.Runtime.InteropServices;
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 [assembly: AssemblyTitle("MultiK2_win32")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyDescription("Kinect for Windows v2 sensor library for Windows 10")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("")]
+[assembly: AssemblyCompany("Jan Marcincin")]
 [assembly: AssemblyProduct("MultiK2_win32")]
 [assembly: AssemblyCopyright("Copyright ©  2017")]
 [assembly: AssemblyTrademark("")]

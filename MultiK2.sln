@@ -1,15 +1,17 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.25420.1
+# Visual Studio 15
+VisualStudioVersion = 15.0.26228.4
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MultiK2", "MultiK2\MultiK2.csproj", "{03EB37C6-5BDB-4AE6-9866-9D10935DC355}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MultiK2Sample", "MultiK2Sample\MultiK2Sample.csproj", "{ECA9B367-7D1E-44F8-A290-4D56A5C1C886}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DesktopKinect", "DesktopKinect\DesktopKinect.csproj", "{7635FD57-ACAF-4FF6-A0C1-272CF0C1E32A}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MultiK2_win32", "MultiK2_win32\MultiK2_win32.csproj", "{40746371-5CDC-478E-AB38-BCC71FE27856}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Samples", "Samples", "{A714A650-32E5-4AFF-BB50-60839CCDBC71}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MultiK2Sample", "Samples\MultiK2Sample\MultiK2Sample.csproj", "{ECA9B367-7D1E-44F8-A290-4D56A5C1C886}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MultiK2DesktopSample", "Samples\MultiK2DesktopSample\MultiK2DesktopSample.csproj", "{7635FD57-ACAF-4FF6-A0C1-272CF0C1E32A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -33,6 +35,16 @@ Global
 		{03EB37C6-5BDB-4AE6-9866-9D10935DC355}.Release|x64.Build.0 = Release|x64
 		{03EB37C6-5BDB-4AE6-9866-9D10935DC355}.Release|x86.ActiveCfg = Release|x86
 		{03EB37C6-5BDB-4AE6-9866-9D10935DC355}.Release|x86.Build.0 = Release|x86
+		{40746371-5CDC-478E-AB38-BCC71FE27856}.Debug|ARM.ActiveCfg = Debug|x86
+		{40746371-5CDC-478E-AB38-BCC71FE27856}.Debug|x64.ActiveCfg = Debug|x64
+		{40746371-5CDC-478E-AB38-BCC71FE27856}.Debug|x64.Build.0 = Debug|x64
+		{40746371-5CDC-478E-AB38-BCC71FE27856}.Debug|x86.ActiveCfg = Debug|x86
+		{40746371-5CDC-478E-AB38-BCC71FE27856}.Debug|x86.Build.0 = Debug|x86
+		{40746371-5CDC-478E-AB38-BCC71FE27856}.Release|ARM.ActiveCfg = Release|x86
+		{40746371-5CDC-478E-AB38-BCC71FE27856}.Release|x64.ActiveCfg = Release|x64
+		{40746371-5CDC-478E-AB38-BCC71FE27856}.Release|x64.Build.0 = Release|x64
+		{40746371-5CDC-478E-AB38-BCC71FE27856}.Release|x86.ActiveCfg = Release|x86
+		{40746371-5CDC-478E-AB38-BCC71FE27856}.Release|x86.Build.0 = Release|x86
 		{ECA9B367-7D1E-44F8-A290-4D56A5C1C886}.Debug|ARM.ActiveCfg = Debug|ARM
 		{ECA9B367-7D1E-44F8-A290-4D56A5C1C886}.Debug|ARM.Build.0 = Debug|ARM
 		{ECA9B367-7D1E-44F8-A290-4D56A5C1C886}.Debug|ARM.Deploy.0 = Debug|ARM
@@ -61,18 +73,12 @@ Global
 		{7635FD57-ACAF-4FF6-A0C1-272CF0C1E32A}.Release|x64.Build.0 = Release|x64
 		{7635FD57-ACAF-4FF6-A0C1-272CF0C1E32A}.Release|x86.ActiveCfg = Release|x86
 		{7635FD57-ACAF-4FF6-A0C1-272CF0C1E32A}.Release|x86.Build.0 = Release|x86
-		{40746371-5CDC-478E-AB38-BCC71FE27856}.Debug|ARM.ActiveCfg = Debug|x86
-		{40746371-5CDC-478E-AB38-BCC71FE27856}.Debug|x64.ActiveCfg = Debug|x64
-		{40746371-5CDC-478E-AB38-BCC71FE27856}.Debug|x64.Build.0 = Debug|x64
-		{40746371-5CDC-478E-AB38-BCC71FE27856}.Debug|x86.ActiveCfg = Debug|x86
-		{40746371-5CDC-478E-AB38-BCC71FE27856}.Debug|x86.Build.0 = Debug|x86
-		{40746371-5CDC-478E-AB38-BCC71FE27856}.Release|ARM.ActiveCfg = Release|x86
-		{40746371-5CDC-478E-AB38-BCC71FE27856}.Release|x64.ActiveCfg = Release|x64
-		{40746371-5CDC-478E-AB38-BCC71FE27856}.Release|x64.Build.0 = Release|x64
-		{40746371-5CDC-478E-AB38-BCC71FE27856}.Release|x86.ActiveCfg = Release|x86
-		{40746371-5CDC-478E-AB38-BCC71FE27856}.Release|x86.Build.0 = Release|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{ECA9B367-7D1E-44F8-A290-4D56A5C1C886} = {A714A650-32E5-4AFF-BB50-60839CCDBC71}
+		{7635FD57-ACAF-4FF6-A0C1-272CF0C1E32A} = {A714A650-32E5-4AFF-BB50-60839CCDBC71}
 	EndGlobalSection
 EndGlobal

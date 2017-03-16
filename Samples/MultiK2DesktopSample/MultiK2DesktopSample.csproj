@@ -7,8 +7,8 @@
     <ProjectGuid>{7635FD57-ACAF-4FF6-A0C1-272CF0C1E32A}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>DesktopKinect</RootNamespace>
-    <AssemblyName>DesktopKinect</AssemblyName>
+    <RootNamespace>MultiK2DesktopSample</RootNamespace>
+    <AssemblyName>MultiK2DesktopSample</AssemblyName>
     <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetPlatformVersion>10.0.14393.0</TargetPlatformVersion>
@@ -68,7 +68,7 @@
     <Reference Include="System.Core" />
     <Reference Include="System.Runtime.WindowsRuntime, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\..\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETCore\v4.5\System.Runtime.WindowsRuntime.dll</HintPath>
+      <HintPath>$(MSBuildProgramFiles32)\Reference Assemblies\Microsoft\Framework\.NETCore\v4.5\System.Runtime.WindowsRuntime.dll</HintPath>
     </Reference>
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
@@ -77,7 +77,7 @@
     <Reference Include="System.Net.Http" />
     <Reference Include="System.Xml" />
     <Reference Include="Windows">
-      <HintPath>..\..\..\..\..\Program Files (x86)\Windows Kits\10\UnionMetadata\Windows.winmd</HintPath>
+      <HintPath>$(MSBuildProgramFiles32)\Windows Kits\10\UnionMetadata\Windows.winmd</HintPath>
       <Private>False</Private>
     </Reference>
   </ItemGroup>
@@ -89,7 +89,7 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\MultiK2_win32\MultiK2_win32.csproj">
+    <ProjectReference Include="..\..\MultiK2_win32\MultiK2_win32.csproj">
       <Project>{40746371-5cdc-478e-ab38-bcc71fe27856}</Project>
       <Name>MultiK2_win32</Name>
     </ProjectReference>

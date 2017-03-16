@@ -137,7 +137,7 @@
     </Page>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\MultiK2\MultiK2.csproj">
+    <ProjectReference Include="..\..\MultiK2\MultiK2.csproj">
       <Project>{03eb37c6-5bdb-4ae6-9866-9d10935dc355}</Project>
       <Name>MultiK2</Name>
     </ProjectReference>

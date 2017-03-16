@@ -75,7 +75,7 @@ namespace MultiK2
             x = x * d * depth;
             y = y * d * depth;
             
-            return new Vector3(x * depth, y * depth, depth);
+            return new Vector3(x, y, depth);
         }
     }
 }

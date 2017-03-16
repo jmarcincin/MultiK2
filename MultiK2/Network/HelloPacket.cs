@@ -7,8 +7,10 @@ using Windows.Storage.Streams;
 
 namespace MultiK2.Network
 {
-    class HelloPacket
+    internal class HelloPacket
     {
+        public const uint Size = 8;
+
         // "MK2P"
         private const uint ProtocolHeader = 0x4D | 0x4B << 8 | 0x32 << 16 | 0x50 << 24;
         

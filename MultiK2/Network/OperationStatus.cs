@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace MultiK2.Network
 {
-    enum OperationType
+    internal enum OperationStatus
     {
         Request = 1,
         PushInit = 2,

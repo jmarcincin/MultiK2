@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MultiK2.Network;
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 using Windows.Devices.Enumeration;
@@ -8,10 +9,11 @@ using Windows.Media.Capture;
 using Windows.Media.Capture.Frames;
 using Windows.Media.MediaProperties;
 using Windows.Media.Render;
+using Windows.Networking;
 
 namespace MultiK2
 {
-    public sealed partial class Sensor
+    public sealed class Sensor
     {
         private static string PoseTrackingSubType = new Guid(0x69232056, 0x2ed9, 0x4d0e, 0x89, 0xcc, 0x5d, 0x27, 0x34, 0xa5, 0x68, 0x8).ToString("B").ToUpper();
 
@@ -19,7 +21,7 @@ namespace MultiK2
         {
             return Task.Run(async () =>
             {
-                // todo: remove custom from required streams - Xbox doen't expose it yet
+                // todo: remove custom from required streams - Xbox doesn't expose it yet
                 var cameraSensorGroups = await MediaFrameSourceGroup.FindAllAsync();
                 var sourceGroup = cameraSensorGroups.FirstOrDefault(
                     group =>
@@ -32,6 +34,11 @@ namespace MultiK2
             }).AsAsyncOperation();
         }
 
+        public static Sensor CreateNetworkSensor(EndpointPair remoteEndPoint)
+        {
+            return new Sensor(remoteEndPoint);
+        }
+
         private MediaFrameSourceGroup _sourceGroup;
         private MediaCapture _mediaCapture;
 
@@ -42,13 +49,22 @@ namespace MultiK2
         private AudioFrameReader _audioReader;
 
         private CoordinateMapper _coordinateMapper = new CoordinateMapper();
+        
+        private NetworkServer _networkServer;
+        private NetworkClient _networkClient;
+        
+        private Sensor(EndpointPair remoteEndPoint)
+        {
+            _networkClient = new NetworkClient(remoteEndPoint);
+            Type = SensorType.NetworkClient;
+        }
 
         private Sensor(MediaFrameSourceGroup kinectMediaGroup)
         {
             _sourceGroup = kinectMediaGroup;
         }
 
-        public bool IsActive => _mediaCapture != null || _sensorConnection != null;
+        public bool IsActive => _mediaCapture != null || _networkClient != null && _networkClient.IsConnected;
 
         public SensorType Type { get; private set; }
 
@@ -66,22 +82,22 @@ namespace MultiK2
                         var captureSettings = new MediaCaptureInitializationSettings
                         {
                             SourceGroup = _sourceGroup,
-                            SharingMode = MediaCaptureSharingMode.ExclusiveControl,
+                            SharingMode = MediaCaptureSharingMode.SharedReadOnly,
                             StreamingCaptureMode = StreamingCaptureMode.Video,
                             MemoryPreference = MediaCaptureMemoryPreference.Cpu,
                         };
                         _mediaCapture = new MediaCapture();
                         await _mediaCapture.InitializeAsync(captureSettings);
                     }
-                    if (Type == SensorType.NetworkServer)
+                    if (Type == SensorType.NetworkServer && _networkServer == null)
                     {
-                        // set up listener
-                        await StartListener();
+                        _networkServer = new NetworkServer(this);
+                        await _networkServer.StartListener();
                     }
                 }
                 else
                 {
-                    await OpenNetworkAsync();
+                    await _networkClient.OpenNetworkAsync();
                 }              
             }).AsAsyncAction();
         }
@@ -110,16 +126,14 @@ namespace MultiK2
                 _audioReader?.Dispose();
                 _audioReader = null;
 
-                if (Type != SensorType.NetworkClient)
-                {
-                    _mediaCapture?.Dispose();
-                    _mediaCapture = null;
-                }
-                else
-                {
-                    _sensorConnection.Dispose();
-                    _sensorConnection = null;
-                }
+                _mediaCapture?.Dispose();
+                _mediaCapture = null;
+
+                _mediaCapture?.Dispose();
+                _mediaCapture = null;
+
+                _networkClient = null;
+                _networkServer = null;                
             }).AsAsyncAction();
         }
 
@@ -213,16 +227,23 @@ namespace MultiK2
             {
                 if (_bodyReader == null)
                 {
-                    var bodyIndexSourceInfo = _sourceGroup.SourceInfos.Where(si => si.SourceKind == MediaFrameSourceKind.Custom);
-                    foreach (var sourceInfo in bodyIndexSourceInfo)
+                    if (Type == SensorType.NetworkClient)
                     {
-                        MediaFrameSource customSource;
-                        if (_mediaCapture.FrameSources.TryGetValue(sourceInfo.Id, out customSource) &&
-                        customSource.CurrentFormat.MajorType == "Perception" &&
-                        customSource.CurrentFormat.Subtype == PoseTrackingSubType)
+                        _bodyReader = new BodyFrameReader(this, _networkClient);
+                    }
+                    else
+                    {
+                        var bodyIndexSourceInfo = _sourceGroup.SourceInfos.Where(si => si.SourceKind == MediaFrameSourceKind.Custom);
+                        foreach (var sourceInfo in bodyIndexSourceInfo)
                         {
-                            var bodyMediaReader = await _mediaCapture.CreateFrameReaderAsync(customSource);
-                            _bodyReader = new BodyFrameReader(this, bodyMediaReader);
+                            MediaFrameSource customSource;
+                            if (_mediaCapture.FrameSources.TryGetValue(sourceInfo.Id, out customSource) &&
+                            customSource.CurrentFormat.MajorType == "Perception" &&
+                            customSource.CurrentFormat.Subtype == PoseTrackingSubType)
+                            {
+                                var bodyMediaReader = await _mediaCapture.CreateFrameReaderAsync(customSource);
+                                _bodyReader = new BodyFrameReader(this, bodyMediaReader);
+                            }
                         }
                     }
                 }
