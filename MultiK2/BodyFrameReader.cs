@@ -10,8 +10,8 @@ namespace MultiK2
 {
     public sealed class BodyFrameReader
     {
-        private MediaFrameReader _bodyReader;
-        private NetworkClient _networkClient;
+        private readonly MediaFrameReader _bodyReader;
+        private readonly NetworkClient _networkClient;
 
         private bool _isStarted;
 
@@ -55,6 +55,7 @@ namespace MultiK2
                     frame.Dispose();
                     subscribers(this, bodyArgs);
                 }
+                frame?.Dispose();
             }
         }
         
@@ -94,8 +95,18 @@ namespace MultiK2
         {
             return Task.Run(async () =>
             {
-                _bodyReader.FrameArrived -= BodyFrameReader_FrameArrived;
-                await _bodyReader.StopAsync();
+                if (_bodyReader != null)
+                {
+                    _bodyReader.FrameArrived -= BodyFrameReader_FrameArrived;
+                    await _bodyReader.StopAsync();
+                }
+                else
+                {
+                    _networkClient.BodyFrameArrived -= NetworkClient_BodyFrameArrived;
+                    // todo handle response?
+                    await _networkClient.SendCommandAsync(new CloseReader(ReaderType.Body));
+                }
+
                 _isStarted = false;
             }).AsAsyncAction();
         }
@@ -103,7 +114,6 @@ namespace MultiK2
         internal void Dispose()
         {
             _bodyReader?.Dispose();
-            _bodyReader = null;
         }
     }
 

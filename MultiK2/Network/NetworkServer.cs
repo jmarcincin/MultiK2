@@ -1,7 +1,10 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
+using System.Net;
+using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -17,10 +20,12 @@ namespace MultiK2.Network
         Busy
     }
 
-    internal class NetworkServer :NetworkBase
+    internal class NetworkServer : NetworkBase
     {
         private Sensor _sensor;
-        private StreamSocketListener _socketListener;
+        //private StreamSocketListener _socketListener;
+        private CancellationTokenSource _cancellationTokenSource;
+        private Socket _socketListener;
         
         public NetworkServer(Sensor kinectSensor)
         {
@@ -29,100 +34,87 @@ namespace MultiK2.Network
 
         public async Task StartListener()
         {
+            if (_socketListener == null)
+            {
+                _socketListener = new Socket(SocketType.Stream, ProtocolType.Tcp);
+                _socketListener.Bind(new IPEndPoint(IPAddress.Any, _sensor.ServerPort));
+                _socketListener.Listen(2);
+
+                ResetAccept(null);
+            }
+
+                /*
             if (_socketListener == null) { }
 
             _socketListener = _socketListener ?? new StreamSocketListener();
             _socketListener.ConnectionReceived += SocketListener_ConnectionReceived;
-            await _socketListener.BindEndpointAsync(null, "8599");
+            await _socketListener.BindEndpointAsync(null, "8599");*/
         }
-        
-        private async void SocketListener_ConnectionReceived(StreamSocketListener sender, StreamSocketListenerConnectionReceivedEventArgs args)
+
+        private void ResetAccept(SocketAsyncEventArgs acceptArgs)
         {
-            if (_sensorConnection != null)
+            if (acceptArgs == null)
+            {
+                acceptArgs = new SocketAsyncEventArgs();
+                acceptArgs.Completed += SocketOperationCompleted;
+            }
+            else
+            {
+                acceptArgs.AcceptSocket = null;
+            }
+
+            var async = _socketListener.AcceptAsync(acceptArgs);
+            if (!async)
+            {
+                ConnectionReceived(acceptArgs);
+            }
+        }
+
+        private async void ConnectionReceived(SocketAsyncEventArgs acceptArgs)
+        {
+            if (_connection != null)
             {
                 // send sensor busy?
-                args.Socket.Dispose();
+                acceptArgs.AcceptSocket.Dispose();
             }
+            
+            _connection = acceptArgs.AcceptSocket;
 
-            _sensorConnection = args.Socket;
-            _dataReader = new DataReader(_sensorConnection.InputStream);
-            _dataWriter = new DataWriter(_sensorConnection.OutputStream);
+            var helloData = await _connection.ReceiveAsync(HelloPacket.Size);
 
-            _dataWriter.ByteOrder = ByteOrder.LittleEndian;
-            _dataReader.ByteOrder = ByteOrder.LittleEndian;
+            // todo check version header 
+            var helloPacket = HelloPacket.Parse(helloData, 0);
 
-            var operation = await _dataReader.LoadAsync(HelloPacket.Size);
-
-            var hello = HelloPacket.Read(_dataReader);
-
-            // reply with version - resend hello packet
-            hello.Write(_dataWriter);
-            await _dataWriter.StoreAsync();
-            await _dataWriter.FlushAsync();
-
-            // TODO receive loop cancellation
-            Task.Run(ServerReceiveLoop);
+            var helloResponse = new HelloPacket(1);
+            await _connection.SendAsync(helloResponse.GetData());
+            
+            StartReceivingData();
+            StartSendingData();
         }
 
-        private async Task ServerReceiveLoop()
+        private void SocketOperationCompleted(object sender, SocketAsyncEventArgs e)
         {
-            while (true)
+            switch (e.LastOperation)
             {
-                // load packet op code 
-                await _dataReader.LoadAsync(4);
-                var opCode = (OperationCode)_dataReader.ReadInt32();
-
-                // TODO: validate operation type when processing
-                //var operationType = (OperationStatus)_dataReader.ReadInt32();
-
-                switch (opCode)
-                {
-                    case OperationCode.OpenReader:
-                        var openRequest = new OpenReader();
-                        await openRequest.ReadRequest(_dataReader);
-                        
-                        // handle open request + start receiving & resending frames
-                        if (openRequest.Type == ReaderType.Body)
-                        {
-                            var bodyReader = await _sensor.OpenBodyFrameReaderAsync();
-                            if (bodyReader != null)
-                            {
-                                bodyReader.FrameArrived -= BodyReader_FrameArrived;
-                                bodyReader.FrameArrived += BodyReader_FrameArrived;
-
-                                // subscribe + positive response
-                                openRequest.WriteResponse(_dataWriter, OperationStatus.ResponseSuccess);
-                            }
-                            else
-                            {
-                                openRequest.WriteResponse(_dataWriter, OperationStatus.ResponseFail);
-                            }
-                        }
-                        else
-                        {
-                            openRequest.WriteResponse(_dataWriter, OperationStatus.ResponseFailNotAvailable);
-                        }
+                case SocketAsyncOperation.Accept:
+                    {
+                        // process accept
+                        ConnectionReceived(e);
                         break;
-                    case OperationCode.CloseReader:
-                        var closeRequest = new CloseReader();
-                        await closeRequest.ReadRequest(_dataReader);
-                        // handle close request
-
-                        closeRequest.WriteResponse(_dataWriter, OperationStatus.ResponseSuccess);
-
-                        break;
-                    case OperationCode.CloseSensor:
-                        // todo: close all opened readers but keep kinect open / listen for connections
-                        _sensorConnection.Dispose();
-                        _sensorConnection = null;
-
-                        // break task loop
-                        return;
-                }
-
-                await _dataWriter.StoreAsync();
-                await _dataWriter.FlushAsync();
+                    }
             }
+        }
+        
+        private void DepthReader_FrameArrived(object sender, DepthFrameArrivedEventArgs e)
+        {
+            var depthPacket = new DepthFramePacket(e.Bitmap, e.CameraIntrinsics, _sensor.GetCoordinateMapper().DepthToColor);
+            SendFrameData(depthPacket);
+        }
+
+        private void BodyIndexReader_FrameArrived(object sender, BodyIndexFrameArrivedEventArgs e)
+        {
+            var bodyIndexPacket = new BodyIndexFramePacket(e.Bitmap, e.CameraIntrinsics, _sensor.GetCoordinateMapper().DepthToColor);
+            SendFrameData(bodyIndexPacket);
         }
 
         private void BodyReader_FrameArrived(object sender, BodyFrameArrivedEventArgs e)
@@ -131,7 +123,113 @@ namespace MultiK2.Network
             var bodyPacket = new BodyFramePacket(e.BodyFrame);
             
             // enqueue
-            SendData(bodyPacket);
+            SendFrameData(bodyPacket);
+        }
+        
+        private void ColorReader_FrameArrived(object sender, ColorFrameArrivedEventArgs e)
+        {
+            var colorPacket = new ColorFramePacket(e.Bitmap, e.CameraIntrinsics, _sensor.GetCoordinateMapper().ColorToDepth);
+            SendFrameData(colorPacket);
+        }
+
+        protected async override void ProcessReceivedData(ReadBuffer receiveBuffer)
+        {
+            var opCode = (OperationCode)receiveBuffer.ReadInt32();
+
+            // TODO: validate operation type when processing
+            //var operationType = (OperationStatus)_dataReader.ReadInt32();
+
+            switch (opCode)
+            {
+                case OperationCode.OpenReader:
+                    var openRequest = new OpenReader();
+                    openRequest.ReadCommand(receiveBuffer);
+
+                    // handle open request + start receiving & resending frames
+                    if (openRequest.Type == ReaderType.Body)
+                    {
+                        var bodyReader = _sensor.OpenBodyFrameReaderAsync().AsTask().Result;
+                        if (bodyReader != null)
+                        {
+                            bodyReader.FrameArrived -= BodyReader_FrameArrived;
+                            bodyReader.FrameArrived += BodyReader_FrameArrived;
+
+                            // subscribe + positive response
+                            openRequest.SetResponse(OperationStatus.ResponseSuccess);                            
+                        }
+                        else
+                        {
+                            openRequest.SetResponse(OperationStatus.ResponseFail);                            
+                        }
+                    }
+                    else if (openRequest.Type == ReaderType.Depth)
+                    {
+                        var depthReader = _sensor.OpenDepthFrameReaderAsync().AsTask().Result;
+                        if (depthReader != null)
+                        {
+                            depthReader.FrameArrived -= DepthReader_FrameArrived;
+                            depthReader.FrameArrived += DepthReader_FrameArrived;
+
+                            openRequest.SetResponse(OperationStatus.ResponseSuccess);
+                        }
+                        else
+                        {
+                            openRequest.SetResponse(OperationStatus.ResponseFail);
+                        }
+                    }
+                    else if (openRequest.Type == ReaderType.BodyIndex)
+                    {
+                        var bodyIndexReader = _sensor.OpenBodyIndexFrameReaderAsync().AsTask().Result;
+                        if (bodyIndexReader != null)
+                        {
+                            bodyIndexReader.FrameArrived -= BodyIndexReader_FrameArrived;
+                            bodyIndexReader.FrameArrived += BodyIndexReader_FrameArrived;
+
+                            openRequest.SetResponse(OperationStatus.ResponseSuccess);
+                        }
+                        else
+                        {
+                            openRequest.SetResponse(OperationStatus.ResponseFail);
+                        }
+                    }
+                    else if (openRequest.Type == ReaderType.Color)
+                    {
+                        var colorReader = _sensor.OpenColorFrameReaderAsync().AsTask().Result;
+                        if (colorReader != null)
+                        {
+                            colorReader.FrameArrived -= ColorReader_FrameArrived;
+                            colorReader.FrameArrived += ColorReader_FrameArrived;
+                            openRequest.SetResponse(OperationStatus.ResponseSuccess);
+                        }
+                        else
+                        {
+                            openRequest.SetResponse(OperationStatus.ResponseFail);
+                        }
+                    }
+                    else
+                    {
+                        openRequest.SetResponse(OperationStatus.ResponseFailNotAvailable);
+                    }
+
+                    // send response should happen before subscription (possible race condition when frame gets send before reply to request gets transmitted)
+                    SendRequestCommand(openRequest);
+                    break;
+                case OperationCode.CloseReader:
+                    var closeRequest = new CloseReader();
+                    closeRequest.ReadCommand(receiveBuffer);
+                    
+                    // TODO: handle close request
+                    closeRequest.SetResponse(OperationStatus.ResponseSuccess);
+                    SendRequestCommand(closeRequest);
+                    break;
+                case OperationCode.CloseSensor:
+                    // todo: close all opened readers but keep kinect open / listen for connections
+                    _connection.Dispose();
+                    _connection = null;
+
+                    // break task loop
+                    return;
+            }
         }
     }
 }

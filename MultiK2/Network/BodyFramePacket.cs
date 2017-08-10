@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using Windows.Storage.Streams;
 using MultiK2.Tracking;
+using MultiK2.Utils;
 
 namespace MultiK2.Network
 {
@@ -18,32 +19,50 @@ namespace MultiK2.Network
         {
         }
 
-        public override bool WriteData(DataWriter writer)
+        public override bool WriteData(WriteBuffer writer)
         {
             // frame packet generic header
-            writer.WriteInt32((int)OperationCode.BodyFrameTransfer);
-            writer.WriteInt32((int)OperationStatus.PushInit);
+            writer.Write((int)OperationCode.BodyFrameTransfer);
+            writer.Write((int)OperationStatus.PushInit);
                         
-            writer.WriteInt64(BodyFrame.SystemRelativeTime.Value.Ticks);
-            writer.WriteUInt32((uint)BodyFrame.BinaryData.Length);
-            writer.WriteBytes(BodyFrame.BinaryData);
+            writer.Write(BodyFrame.SystemRelativeTime.Value.Ticks);
+            writer.Write(BodyFrame.BinaryData.Length);
 
+            int writeOffset;
+            writer.ReserveForWrite(BodyFrame.BinaryData.Length, out writeOffset);
+            unsafe
+            {
+                var buffer = writer.GetBuffer();
+                fixed (byte* bufferPtr = buffer)
+                fixed (byte* sourceDataPtr = BodyFrame.BinaryData)
+                {
+                    DataManipulation.Copy(sourceDataPtr, bufferPtr + writeOffset, (uint)BodyFrame.BinaryData.Length);
+                }
+            }
+            
             return true;            
         }
 
-        public override async Task<bool> ReadDataAsync(DataReader reader)
-        {
-            await reader.LoadAsync(16);
-
+        public override bool ReadData(ReadBuffer reader)
+        {            
             // TODO; validate status
             var operationStatus = (OperationStatus)reader.ReadInt32();
             var systemTime = reader.ReadInt64();
-            var dataLenght = reader.ReadUInt32();
-
-            await reader.LoadAsync(dataLenght);
+            var dataLenght = reader.ReadInt32();
             var bodyData = new byte[dataLenght];
-            reader.ReadBytes(bodyData);
 
+            int readOffset;
+            reader.ReserveForReading(dataLenght, out readOffset);
+
+            unsafe
+            {
+                var buffer = reader.GetBuffer();
+                fixed (byte* bodyDataPtr = bodyData)
+                fixed (byte* bufferPtr = buffer)
+                {
+                    DataManipulation.Copy(bufferPtr + readOffset, bodyDataPtr, (uint)dataLenght);
+                }
+            }
             BodyFrame = BodyFrame.Parse(bodyData, TimeSpan.FromTicks(systemTime));
 
             return true;

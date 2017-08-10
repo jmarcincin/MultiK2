@@ -22,6 +22,7 @@ namespace MultiK2.Network
         public CloseReader(ReaderType readerType)
         {
             Type = readerType;
+            Status = OperationStatus.Request;
             _signal = new ManualResetEvent(false);
         }
 
@@ -29,45 +30,33 @@ namespace MultiK2.Network
         {
         }
 
-        public void WriteRequest(DataWriter writer)
+        public void SetResponse(OperationStatus response)
         {
-            writer.WriteInt32((int)OperationCode.CloseReader);
-            writer.WriteInt32((int)OperationStatus.Request);
-            writer.WriteInt32((int)Type);
+            // todo:check value
+            Status = response;
         }
 
-        public void WriteResponse(DataWriter writer, OperationStatus response)
+        public void WriteCommand(WriteBuffer writer)
         {
-            writer.WriteInt32((int)OperationCode.CloseReader);
-            writer.WriteInt32((int)response);
-            writer.WriteInt32((int)Type);
+            writer.Write((int)OperationCode.CloseReader);
+            writer.Write((int)Status);
+            writer.Write((int)Type);
         }
 
-        public async Task ReadRequest(DataReader reader)
-        {
-            await reader.LoadAsync(Size);
-
+        public void ReadCommand(ReadBuffer reader)
+        {           
             // todo: check operation type
             Status = (OperationStatus)reader.ReadInt32();
             Type = (ReaderType)reader.ReadInt32();
         }
-
-        public async Task ReadResponse(DataReader reader)
-        {
-            await reader.LoadAsync(Size);
-
-            // todo: check operation type
-            Status = (OperationStatus)reader.ReadInt32();
-            Type = (ReaderType)reader.ReadInt32();
-        }
-
+        
         public bool MatchingResponse(INetworkCommandAsync commandResponse)
         {
             var command = commandResponse as CloseReader;
             return command != null && command.Type == Type;
         }
 
-        public Task<INetworkCommandAsync> AwaitResponseAsync()
+        Task<INetworkCommandAsync> INetworkCommandAsync.AwaitResponseAsync()
         {
             return Task.Run(
                 () =>
@@ -77,7 +66,7 @@ namespace MultiK2.Network
                 });
         }
 
-        public void SetResponse(INetworkCommandAsync response)
+        void INetworkCommandAsync.SetResponse(INetworkCommandAsync response)
         {
             _response = response;
         }

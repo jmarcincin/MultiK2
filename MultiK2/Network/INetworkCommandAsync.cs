@@ -10,15 +10,13 @@ namespace MultiK2.Network
     internal interface INetworkCommandAsync : IDisposable
     {
         OperationStatus Status { get; }
+                
+        void SetResponse(OperationStatus response);
 
-        void WriteRequest(DataWriter writer);
+        void WriteCommand(WriteBuffer writer);
 
-        void WriteResponse(DataWriter writer, OperationStatus response);
-
-        Task ReadRequest(DataReader reader);
-
-        Task ReadResponse(DataReader reader);
-
+        void ReadCommand(ReadBuffer reader);
+        
         bool MatchingResponse(INetworkCommandAsync commandResponse);
 
         Task<INetworkCommandAsync> AwaitResponseAsync();

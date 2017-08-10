@@ -9,13 +9,13 @@ namespace MultiK2
 {
     public sealed class CameraIntrinsics
     {
-        public float FocalLengthX { get; internal set; }
-        public float FocalLengthY { get; internal set; }
-        public float PrincipalPointX { get; internal set; }
-        public float PrincipalPointY { get; internal set; }
-        public float RadialDistortionFourthOrder { get; internal set; }
-        public float RadialDistortionSecondOrder { get; internal set; }
-        public float RadialDistortionSixthOrder { get; internal set; }
+        public float FocalLengthX { get; set; }
+        public float FocalLengthY { get; set; }
+        public float PrincipalPointX { get; set; }
+        public float PrincipalPointY { get; set; }
+        public float RadialDistortionFourthOrder { get; set; }
+        public float RadialDistortionSecondOrder { get; set; }
+        public float RadialDistortionSixthOrder { get; set; }
 
         public float FrameWidth { get; }
         public float FrameHeight { get; }
@@ -39,6 +39,30 @@ namespace MultiK2
             RadialDistortionSecondOrder = rtCi.RadialDistortion.X;
             RadialDistortionFourthOrder = rtCi.RadialDistortion.Y;
             RadialDistortionSixthOrder = rtCi.RadialDistortion.Z;            
+        }
+
+        internal CameraIntrinsics(
+            float focalX,
+            float focalY, 
+            float height,
+            float width, 
+            float principalX, 
+            float pricipalY,
+            float rad2, 
+            float rad4, 
+            float rad6)
+        {
+            FocalLengthX = focalX;
+            FocalLengthY = focalY;
+            FrameHeight = height;
+            FrameWidth = width;
+
+            PrincipalPointX = principalX;
+            PrincipalPointY = pricipalY;
+
+            RadialDistortionSecondOrder = rad2;
+            RadialDistortionFourthOrder = rad4;
+            RadialDistortionSixthOrder = rad6;
         }
 
         public Vector2 ProjectOntoFrame(Vector3 cameraPoint)

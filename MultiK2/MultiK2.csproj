@@ -104,11 +104,16 @@
     <Compile Include="CameraIntrinsics.cs" />
     <Compile Include="CoordinateMapper.cs" />
     <Compile Include="Network\BodyFramePacket.cs" />
+    <Compile Include="Network\ColorFramePacket.cs" />
+    <Compile Include="Network\BodyIndexFramePacket.cs" />
     <Compile Include="Network\INetworkCommandAsync.cs" />
     <Compile Include="Network\NetworkBase.cs" />
+    <Compile Include="Network\ReadBuffer.cs" />
+    <Compile Include="Network\WriteBuffer.cs" />
     <Compile Include="Network\NetworkClient.cs" />
     <Compile Include="Network\NetworkServer.cs" />
     <Compile Include="Network\NetworkStatusExtensions.cs" />
+    <Compile Include="Network\SocketExtensions.cs" />
     <Compile Include="RuntimeImports.cs" />
     <Compile Include="Network\CloseReader.cs" />
     <Compile Include="Network\DepthFramePacket.cs" />
@@ -134,7 +139,8 @@
     <Compile Include="ColorFrameReader.cs" />
     <Compile Include="Sensor.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Xaml\SkeletonCanvas.cs" />
+    <Compile Include="Utils\DataManipulation.cs" />
+    <Compile Include="Controls\SkeletonCanvas.cs" />
     <EmbeddedResource Include="Properties\MultiK2.rd.xml" />
   </ItemGroup>
   <ItemGroup />
@@ -143,6 +149,32 @@
   </PropertyGroup>
   <PropertyGroup>
     <StartupObject />
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE;NETFX_CORE;WINDOWS_UWP</DefineConstants>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <NoWarn>;2008</NoWarn>
+    <NoStdLib>true</NoStdLib>
+    <DebugType>full</DebugType>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <UseVSHostingProcess>false</UseVSHostingProcess>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|AnyCPU'">
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE;NETFX_CORE;WINDOWS_UWP</DefineConstants>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Optimize>true</Optimize>
+    <NoWarn>;2008</NoWarn>
+    <NoStdLib>true</NoStdLib>
+    <DebugType>pdbonly</DebugType>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <UseVSHostingProcess>false</UseVSHostingProcess>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <Import Project="$(MSBuildExtensionsPath)\Microsoft\WindowsXaml\v$(VisualStudioVersion)\Microsoft.Windows.UI.Xaml.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

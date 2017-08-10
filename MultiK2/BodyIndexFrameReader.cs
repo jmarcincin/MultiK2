@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MultiK2.Network;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -11,7 +12,8 @@ namespace MultiK2
 {
     public sealed class BodyIndexFrameReader
     {
-        private MediaFrameReader _bodyIndexReader;
+        private readonly MediaFrameReader _bodyIndexReader;
+        private readonly NetworkClient _networkClient;
 
         private bool _isStarted;
 
@@ -19,10 +21,32 @@ namespace MultiK2
                 
         public Sensor Sensor { get; }
 
+        internal BodyIndexFrameReader(Sensor sensor, NetworkClient networkClient)
+        {
+            Sensor = sensor;
+            _networkClient = networkClient;
+        }
+
         internal BodyIndexFrameReader(Sensor sensor, MediaFrameReader bodyIndexReader)
         {
             Sensor = sensor;
             _bodyIndexReader = bodyIndexReader;
+        }
+
+        private void NetworkClient_BodyIndexFrameArrived(object sender, BodyIndexFramePacket e)
+        {
+            var subscribers = FrameArrived;
+            if (subscribers != null)
+            {
+                Sensor.GetCoordinateMapper().DepthToColor = e.DepthToColorTransform;
+                var depthArgs =
+                        new BodyIndexFrameArrivedEventArgs(
+                            this,
+                            e.Bitmap,
+                            e.CameraIntrinsics);
+
+                subscribers(this, depthArgs);
+            }
         }
 
         private void BodyIndexReader_FrameArrived(MediaFrameReader sender, MediaFrameArrivedEventArgs args)
@@ -33,7 +57,6 @@ namespace MultiK2
                 var frame = sender.TryAcquireLatestFrame();
                 if (frame != null)
                 {
-
                     var bodyIndexArgs = 
                         new BodyIndexFrameArrivedEventArgs(
                             this, 
@@ -42,6 +65,7 @@ namespace MultiK2
 
                     subscribers(this, bodyIndexArgs);
                 }
+                frame?.Dispose();
             }
         }
 
@@ -51,13 +75,26 @@ namespace MultiK2
             {
                 if (!_isStarted)
                 {
-                    var status = await _bodyIndexReader.StartAsync();
-                    if (status == MediaFrameReaderStartStatus.Success)
+                    if (_bodyIndexReader != null)
                     {
-                        _bodyIndexReader.FrameArrived += BodyIndexReader_FrameArrived;
-                        _isStarted = true;
+                        var status = await _bodyIndexReader.StartAsync();
+                        if (status == MediaFrameReaderStartStatus.Success)
+                        {
+                            _bodyIndexReader.FrameArrived += BodyIndexReader_FrameArrived;
+                            _isStarted = true;
+                        }
+                        return status;
                     }
-                    return status;
+                    else
+                    {
+                        var response = await _networkClient.SendCommandAsync(new OpenReader(ReaderType.BodyIndex, ReaderConfig.Default));
+                        if (response.Status == OperationStatus.ResponseSuccess)
+                        {
+                            _networkClient.BodyIndexFrameArrived += NetworkClient_BodyIndexFrameArrived;
+                            _isStarted = true;
+                        }
+                        return response.Status.ToMediaReaderStartStatus();
+                    }
                 }
                 return MediaFrameReaderStartStatus.Success;
             }).AsAsyncOperation();
@@ -67,8 +104,16 @@ namespace MultiK2
         {
             return Task.Run(async () =>
             {
-                _bodyIndexReader.FrameArrived -= BodyIndexReader_FrameArrived;
-                await _bodyIndexReader.StopAsync();
+                if (_bodyIndexReader != null)
+                {
+                    _bodyIndexReader.FrameArrived -= BodyIndexReader_FrameArrived;
+                    await _bodyIndexReader.StopAsync();
+                }
+                else
+                {
+                    _networkClient.BodyIndexFrameArrived -= NetworkClient_BodyIndexFrameArrived;
+                    await _networkClient.SendCommandAsync(new CloseReader(ReaderType.BodyIndex));
+                }
                 _isStarted = false;
             }).AsAsyncAction();
         }
@@ -76,7 +121,6 @@ namespace MultiK2
         internal void Dispose()
         {
             _bodyIndexReader?.Dispose();
-            _bodyIndexReader = null;
         }
     }
 

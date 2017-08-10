@@ -9,35 +9,42 @@ namespace MultiK2.Network
 {
     internal class HelloPacket
     {
-        public const uint Size = 8;
+        public const int Size = 8;
 
         // "MK2P"
-        private const uint ProtocolHeader = 0x4D | 0x4B << 8 | 0x32 << 16 | 0x50 << 24;
+        private static byte[] ProtocolHeader = { 0x4D, 0x4B, 0x32, 0x50, 0, 0, 0, 0 };
         
         public uint Version { get; }
 
-        public HelloPacket(uint version)
+        public HelloPacket(byte version)
         {
             Version = version;
         }
         
-        public void Write(DataWriter writer)
+        public byte[] GetData()
         {
-            writer.WriteUInt32(ProtocolHeader);
-            writer.WriteUInt32(Version);
+            var copy = ProtocolHeader.ToArray();
+            copy[4] = (byte)Version;
+
+            return copy;
         }
 
-        public static HelloPacket Read(DataReader reader)
+        public static HelloPacket Parse(byte[] data, int offset)
         {
-            var protocolHeader = reader.ReadUInt32();
-
-            if (protocolHeader != ProtocolHeader)
+            if (data.Length < offset + 8)
             {
-                throw new Exception("Header does not match");
+                return null;
             }
 
-            var version = reader.ReadUInt32();
-            return new HelloPacket(version);
+            for (var i = 0; i < 4; i++)
+            {
+                if (data[offset + i] != ProtocolHeader[i])
+                {
+                    return null;
+                } 
+            }
+            
+            return new HelloPacket(data[offset + 4]);
         }
     }
 }

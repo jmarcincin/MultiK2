@@ -10,8 +10,7 @@ namespace MultiK2
     public enum ReaderConfig
     {
         Default = 0,
-        HalfRate = 0x01,
+        Filter = 0x01,
         HalfResolution = 0x02,
-        OnlyMetadata = 0x04
     }
 }

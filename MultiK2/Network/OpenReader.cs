@@ -27,39 +27,30 @@ namespace MultiK2.Network
         {
             Type = readerType;
             Config = config;
+            Status = OperationStatus.Request;
             _signal = new ManualResetEvent(false);
         }
 
         public OpenReader() { }
 
-        public void WriteRequest(DataWriter writer)
+        public void WriteCommand(WriteBuffer writer)
         {
-            writer.WriteInt32((int)OperationCode.OpenReader);
-            writer.WriteInt32((int)OperationStatus.Request);
-            writer.WriteInt32((int)Type);
-            writer.WriteInt32((int)Config);
+            writer.Write((int)OperationCode.OpenReader);
+            writer.Write((int)Status);
+            writer.Write((int)Type);
+            writer.Write((int)Config);
         }
-
-        public void WriteResponse(DataWriter writer, OperationStatus response)
+        
+        public void ReadCommand(ReadBuffer reader)
         {
-            writer.WriteInt32((int)OperationCode.OpenReader);
-            writer.WriteInt32((int)response);
-            writer.WriteInt32((int)Type);
-            writer.WriteInt32((int)Config);
-        }
-
-        public async Task ReadRequest(DataReader reader)
-        {
-            await reader.LoadAsync(Size);
-
             Status = (OperationStatus)reader.ReadInt32();
             Type = (ReaderType)reader.ReadInt32();
             Config = (ReaderConfig)reader.ReadInt32();
         }
 
-        public async Task ReadResponse(DataReader reader)
+        public void SetResponse(OperationStatus response)
         {
-            await ReadRequest(reader);
+            Status = response;
         }
 
         public bool MatchingResponse(INetworkCommandAsync commandResponse)
@@ -68,7 +59,7 @@ namespace MultiK2.Network
             return command != null && command.Type == Type && command.Config == Config;
         }
 
-        public Task<INetworkCommandAsync> AwaitResponseAsync()
+        Task<INetworkCommandAsync> INetworkCommandAsync.AwaitResponseAsync()
         {
             return Task.Run(
                 () =>
@@ -78,7 +69,7 @@ namespace MultiK2.Network
                 });
         }
 
-        public void SetResponse(INetworkCommandAsync response)
+        void INetworkCommandAsync.SetResponse(INetworkCommandAsync response)
         {
             _response = response;
             _signal.Set();

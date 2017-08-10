@@ -1,6 +1,7 @@
 ﻿using MultiK2.Network;
 using System;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 using Windows.Devices.Enumeration;
 using Windows.Foundation;
@@ -16,6 +17,20 @@ namespace MultiK2
     public sealed class Sensor
     {
         private static string PoseTrackingSubType = new Guid(0x69232056, 0x2ed9, 0x4d0e, 0x89, 0xcc, 0x5d, 0x27, 0x34, 0xa5, 0x68, 0x8).ToString("B").ToUpper();
+        
+        private MediaFrameSourceGroup _sourceGroup;
+        private MediaCapture _mediaCapture;
+
+        private ColorFrameReader _colorReader;
+        private DepthFrameReader _depthReader;
+        private BodyIndexFrameReader _bodyIndexReader;
+        private BodyFrameReader _bodyReader;
+        private AudioFrameReader _audioReader;
+
+        private CoordinateMapper _coordinateMapper = new CoordinateMapper();
+
+        private NetworkServer _networkServer;
+        private NetworkClient _networkClient;
 
         public static IAsyncOperation<Sensor> GetDefaultAsync()
         {
@@ -34,26 +49,12 @@ namespace MultiK2
             }).AsAsyncOperation();
         }
 
-        public static Sensor CreateNetworkSensor(EndpointPair remoteEndPoint)
+        public static Sensor CreateNetworkSensor(string ipAddress, int port)
         {
-            return new Sensor(remoteEndPoint);
+            return new Sensor(new IPEndPoint(IPAddress.Parse(ipAddress), port));
         }
-
-        private MediaFrameSourceGroup _sourceGroup;
-        private MediaCapture _mediaCapture;
-
-        private ColorFrameReader _colorReader;
-        private DepthFrameReader _depthReader;
-        private BodyIndexFrameReader _bodyIndexReader;
-        private BodyFrameReader _bodyReader;
-        private AudioFrameReader _audioReader;
-
-        private CoordinateMapper _coordinateMapper = new CoordinateMapper();
-        
-        private NetworkServer _networkServer;
-        private NetworkClient _networkClient;
-        
-        private Sensor(EndpointPair remoteEndPoint)
+                
+        private Sensor(IPEndPoint remoteEndPoint)
         {
             _networkClient = new NetworkClient(remoteEndPoint);
             Type = SensorType.NetworkClient;
@@ -69,6 +70,9 @@ namespace MultiK2
         public SensorType Type { get; private set; }
 
         public bool AllowRemoteClient { get; set; }
+
+        // todo range check (ushort)
+        public int ServerPort { get; set; } = 8599;
 
         public IAsyncAction OpenAsync()
         {
@@ -128,10 +132,7 @@ namespace MultiK2
 
                 _mediaCapture?.Dispose();
                 _mediaCapture = null;
-
-                _mediaCapture?.Dispose();
-                _mediaCapture = null;
-
+                
                 _networkClient = null;
                 _networkServer = null;                
             }).AsAsyncAction();
@@ -148,23 +149,25 @@ namespace MultiK2
             {
                 if (_colorReader == null)
                 {
-                    var colorSourceInfo = _sourceGroup.SourceInfos.FirstOrDefault(si => si.SourceKind == MediaFrameSourceKind.Color);
-                    if (colorSourceInfo == null)
+                    if (Type == SensorType.NetworkClient)
                     {
-                        return null;
-                    }
-                    MediaFrameSource colorSource;
-                    if (_mediaCapture.FrameSources.TryGetValue(colorSourceInfo.Id, out colorSource))
-                    {
-                        var colorMediaReader = await _mediaCapture.CreateFrameReaderAsync(colorSource);
-                        _colorReader = new ColorFrameReader(this, colorMediaReader, config);
+                        _colorReader = new ColorFrameReader(this, _networkClient);
                     }
                     else
                     {
-                        return null;
+                        var colorSourceInfo = _sourceGroup.SourceInfos.FirstOrDefault(si => si.SourceKind == MediaFrameSourceKind.Color);
+                        if (colorSourceInfo != null)
+                        {
+                            MediaFrameSource colorSource;
+                            if (_mediaCapture.FrameSources.TryGetValue(colorSourceInfo.Id, out colorSource))
+                            {
+                                var colorMediaReader = await _mediaCapture.CreateFrameReaderAsync(colorSource);
+                                _colorReader = new ColorFrameReader(this, colorMediaReader, config);
+                            }
+                        }
                     }
                 }
-                await _colorReader.OpenAsync();
+                await _colorReader?.OpenAsync();
                 return _colorReader;
             }).AsAsyncOperation();
         }
@@ -175,23 +178,25 @@ namespace MultiK2
             {
                 if (_depthReader == null)
                 {
-                    var depthSourceInfo = _sourceGroup.SourceInfos.FirstOrDefault(si => si.SourceKind == MediaFrameSourceKind.Depth);
-                    if (depthSourceInfo == null)
+                    if (Type == SensorType.NetworkClient)
                     {
-                        return null;
-                    }
-                    MediaFrameSource depthSource;
-                    if (_mediaCapture.FrameSources.TryGetValue(depthSourceInfo.Id, out depthSource))
-                    {
-                        var depthMediaReader = await _mediaCapture.CreateFrameReaderAsync(depthSource);
-                        _depthReader = new DepthFrameReader(this, depthMediaReader);
+                        _depthReader = new DepthFrameReader(this, _networkClient);
                     }
                     else
                     {
-                        return null;
+                        var depthSourceInfo = _sourceGroup.SourceInfos.FirstOrDefault(si => si.SourceKind == MediaFrameSourceKind.Depth);
+                        if (depthSourceInfo != null)
+                        {
+                            MediaFrameSource depthSource;
+                            if (_mediaCapture.FrameSources.TryGetValue(depthSourceInfo.Id, out depthSource))
+                            {
+                                var depthMediaReader = await _mediaCapture.CreateFrameReaderAsync(depthSource);
+                                _depthReader = new DepthFrameReader(this, depthMediaReader);
+                            }
+                        }
                     }
                 }
-                await _depthReader.OpenAsync();
+                await _depthReader?.OpenAsync();
                 return _depthReader;
             }).AsAsyncOperation();
         }
@@ -202,17 +207,24 @@ namespace MultiK2
             {
                 if (_bodyIndexReader == null)
                 {
-                    var bodyIndexSourceInfo = _sourceGroup.SourceInfos.Where(si => si.SourceKind == MediaFrameSourceKind.Custom);
-                    foreach (var sourceInfo in bodyIndexSourceInfo)
+                    if (Type == SensorType.NetworkClient)
                     {
-                        MediaFrameSource customSource;
-                        if (_mediaCapture.FrameSources.TryGetValue(sourceInfo.Id, out customSource) &&
-                        customSource.CurrentFormat.MajorType == "Video" &&
-                        customSource.CurrentFormat.Subtype == "L8")
+                        _bodyIndexReader = new BodyIndexFrameReader(this, _networkClient);
+                    }
+                    else
+                    {
+                        var bodyIndexSourceInfo = _sourceGroup.SourceInfos.Where(si => si.SourceKind == MediaFrameSourceKind.Custom);
+                        foreach (var sourceInfo in bodyIndexSourceInfo)
                         {
-                            var bodyIndexMediaReader = await _mediaCapture.CreateFrameReaderAsync(customSource);                            
-                            _bodyIndexReader = new BodyIndexFrameReader(this, bodyIndexMediaReader);
-                            break;
+                            MediaFrameSource customSource;
+                            if (_mediaCapture.FrameSources.TryGetValue(sourceInfo.Id, out customSource) &&
+                            customSource.CurrentFormat.MajorType == "Video" &&
+                            customSource.CurrentFormat.Subtype == "L8")
+                            {
+                                var bodyIndexMediaReader = await _mediaCapture.CreateFrameReaderAsync(customSource);
+                                _bodyIndexReader = new BodyIndexFrameReader(this, bodyIndexMediaReader);
+                                break;
+                            }
                         }
                     }
                 }
@@ -243,6 +255,7 @@ namespace MultiK2
                             {
                                 var bodyMediaReader = await _mediaCapture.CreateFrameReaderAsync(customSource);
                                 _bodyReader = new BodyFrameReader(this, bodyMediaReader);
+                                break;
                             }
                         }
                     }

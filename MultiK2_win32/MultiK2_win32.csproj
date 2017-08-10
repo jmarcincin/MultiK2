@@ -8,7 +8,7 @@
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>MultiK2_win32</RootNamespace>
-    <AssemblyName>MultiK2_win32</AssemblyName>
+    <AssemblyName>MultiK2</AssemblyName>
     <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetPlatformVersion>10.0.14393.0</TargetPlatformVersion>
@@ -51,6 +51,26 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x86'">
     <OutputPath>bin\x86\Release\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
+    <Optimize>true</Optimize>
+    <DebugType>pdbonly</DebugType>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <DebugType>full</DebugType>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|AnyCPU'">
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Optimize>true</Optimize>
     <DebugType>pdbonly</DebugType>
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -101,8 +121,14 @@
     <Compile Include="..\MultiK2\Network\BodyFramePacket.cs">
       <Link>Network\BodyFramePacket.cs</Link>
     </Compile>
+    <Compile Include="..\MultiK2\Network\BodyIndexFramePacket.cs">
+      <Link>Network\BodyIndexFramePacket.cs</Link>
+    </Compile>
     <Compile Include="..\MultiK2\Network\CloseReader.cs">
       <Link>Network\CloseReader.cs</Link>
+    </Compile>
+    <Compile Include="..\MultiK2\Network\ColorFramePacket.cs">
+      <Link>Network\ColorFramePacket.cs</Link>
     </Compile>
     <Compile Include="..\MultiK2\Network\DepthFramePacket.cs">
       <Link>Network\DepthFramePacket.cs</Link>
@@ -136,6 +162,15 @@
     </Compile>
     <Compile Include="..\MultiK2\Network\OperationStatus.cs">
       <Link>Network\OperationStatus.cs</Link>
+    </Compile>
+    <Compile Include="..\MultiK2\Network\ReadBuffer.cs">
+      <Link>Network\ReadBuffer.cs</Link>
+    </Compile>
+    <Compile Include="..\MultiK2\Network\SocketExtensions.cs">
+      <Link>Network\SocketExtensions.cs</Link>
+    </Compile>
+    <Compile Include="..\MultiK2\Network\WriteBuffer.cs">
+      <Link>Network\WriteBuffer.cs</Link>
     </Compile>
     <Compile Include="..\MultiK2\ReaderConfig.cs">
       <Link>ReaderConfig.cs</Link>
@@ -181,6 +216,9 @@
     </Compile>
     <Compile Include="..\MultiK2\Tracking\TrackingState.cs">
       <Link>Tracking\TrackingState.cs</Link>
+    </Compile>
+    <Compile Include="..\MultiK2\Utils\DataManipulation.cs">
+      <Link>Utils\DataManipulation.cs</Link>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

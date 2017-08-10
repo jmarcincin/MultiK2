@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MultiK2.Network;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -12,7 +13,8 @@ namespace MultiK2
 {
     public sealed class DepthFrameReader
     {
-        private MediaFrameReader _depthReader;
+        private readonly MediaFrameReader _depthReader;
+        private readonly NetworkClient _networkClient;
 
         private bool _isStarted;
 
@@ -20,10 +22,32 @@ namespace MultiK2
                 
         public Sensor Sensor { get; }
 
+        internal DepthFrameReader(Sensor sensor, NetworkClient networkClient)
+        {
+            Sensor = sensor;
+            _networkClient = networkClient;
+        }
+
         internal DepthFrameReader(Sensor sensor, MediaFrameReader depthReader)
         {
             Sensor = sensor;
             _depthReader = depthReader;            
+        }
+        
+        private void NetworkClient_DepthFrameArrived(object sender, DepthFramePacket e)
+        {
+            var subscribers = FrameArrived;
+            if (subscribers != null)
+            {
+                Sensor.GetCoordinateMapper().DepthToColor = e.DepthToColorTransform;
+                var depthArgs =
+                        new DepthFrameArrivedEventArgs(
+                            this,
+                            e.Bitmap,
+                            e.CameraIntrinsics);
+
+                subscribers(this, depthArgs);
+            }
         }
 
         private void DepthReader_FrameArrived(MediaFrameReader sender, MediaFrameArrivedEventArgs args)
@@ -43,6 +67,7 @@ namespace MultiK2
 
                     subscribers(this, depthArgs);
                 }
+                frame?.Dispose();
             }
         }
 
@@ -52,24 +77,45 @@ namespace MultiK2
             {
                 if (!_isStarted)
                 {
-                    var status = await _depthReader.StartAsync();
-                    if (status == MediaFrameReaderStartStatus.Success)
+                    if (_depthReader != null)
                     {
-                        _depthReader.FrameArrived += DepthReader_FrameArrived;
-                        _isStarted = true;
+                        var status = await _depthReader.StartAsync();
+                        if (status == MediaFrameReaderStartStatus.Success)
+                        {
+                            _depthReader.FrameArrived += DepthReader_FrameArrived;
+                            _isStarted = true;
+                        }
+                        return status;
                     }
-                    return status;
+                    else
+                    {
+                        var response = await _networkClient.SendCommandAsync(new OpenReader(ReaderType.Depth, ReaderConfig.Default));
+                        if (response.Status == OperationStatus.ResponseSuccess)
+                        {
+                            _networkClient.DepthFrameArrived += NetworkClient_DepthFrameArrived;
+                            _isStarted = true;
+                        }
+                        return response.Status.ToMediaReaderStartStatus();
+                    }
                 }
                 return MediaFrameReaderStartStatus.Success;
             }).AsAsyncOperation();
         }
-
+                
         public IAsyncAction CloseAsync()
         {
             return Task.Run(async () =>
             {
-                _depthReader.FrameArrived -= DepthReader_FrameArrived;
-                await _depthReader.StopAsync();
+                if (_depthReader != null)
+                {
+                    _depthReader.FrameArrived -= DepthReader_FrameArrived;
+                    await _depthReader.StopAsync();
+                }
+                else
+                {
+                    _networkClient.DepthFrameArrived -= NetworkClient_DepthFrameArrived;
+                    await _networkClient.SendCommandAsync(new CloseReader(ReaderType.Depth));
+                }
                 _isStarted = false;
             }).AsAsyncAction();
         }
@@ -77,7 +123,6 @@ namespace MultiK2
         internal void Dispose()
         {
             _depthReader?.Dispose();
-            _depthReader = null;
         }
     }
 

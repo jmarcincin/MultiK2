@@ -1,12 +1,12 @@
-﻿using MultiK2;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Windows.Networking;
 
-namespace MultiK2DesktopSample
+using MultiK2;
+
+namespace MultiK2DesktopClient
 {
     class Program
     {
@@ -14,28 +14,26 @@ namespace MultiK2DesktopSample
 
         static void Main(string[] args)
         {
-            var sensor = Sensor.GetDefaultAsync().AsTask().Result;
-
-            // TODO: rewrite using async/await
-
-            sensor.AllowRemoteClient = true;
-            sensor.OpenAsync().AsTask().Wait();
-
-            Console.WriteLine($"Kinect sensor running in {sensor.Type} mode");
-            
             var clientSensor = Sensor.CreateNetworkSensor("127.0.0.1", 8599);
 
-            /*
             Console.WriteLine($"Kinect sensor 2 set-up in {clientSensor.Type} mode");
             clientSensor.OpenAsync().AsTask().Wait();
             Console.WriteLine($"Kinect sensor 2 sensor opened");
 
-            var bodyreader = clientSensor.OpenBodyFrameReaderAsync().AsTask().Result;
+            //var bodyreader = clientSensor.OpenBodyFrameReaderAsync().AsTask().Result;
             Console.WriteLine($"Kinect sensor 2 IsActive: {clientSensor.IsActive}");
-            bodyreader.FrameArrived += Bodyreader_FrameArrived;
-            */
+            //bodyreader.FrameArrived += Bodyreader_FrameArrived;
+
+            var depthreader = clientSensor.OpenDepthFrameReaderAsync().AsTask().Result;
+            depthreader.FrameArrived += Depthreader_FrameArrived;
+
             Console.ReadLine();
             Console.ReadLine();
+        }
+
+        private static void Depthreader_FrameArrived(object sender, DepthFrameArrivedEventArgs e)
+        {
+            // nop?
         }
 
         private static void Bodyreader_FrameArrived(object sender, BodyFrameArrivedEventArgs e)

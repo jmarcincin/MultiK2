@@ -5,7 +5,7 @@ using MultiK2.Utils;
 
 namespace MultiK2.Network
 {
-    internal class DepthFramePacket : FramePacket
+    internal class ColorFramePacket : FramePacket
     {
         // todo validate if depth data length is always in multiples of 8
         private byte[] _data;                
@@ -15,16 +15,16 @@ namespace MultiK2.Network
 
         public CameraIntrinsics CameraIntrinsics { get; private set; }
 
-        public Matrix4x4? DepthToColorTransform { get; private set; }
+        public Matrix4x4? ColorToDepthTransform { get; private set; }
 
-        public DepthFramePacket(SoftwareBitmap depthBitmap, CameraIntrinsics intrinsics, Matrix4x4? depthToColorTransform) : base(ReaderType.Depth)
+        public ColorFramePacket(SoftwareBitmap depthBitmap, CameraIntrinsics intrinsics, Matrix4x4? colorToDepthTransform) : base(ReaderType.Color)
         {
             Bitmap = depthBitmap;
             CameraIntrinsics = intrinsics;
-            DepthToColorTransform = depthToColorTransform;
+            ColorToDepthTransform = colorToDepthTransform;
         }
 
-        public DepthFramePacket() : base(ReaderType.Depth) { }
+        public ColorFramePacket() : base(ReaderType.Color) { }
 
         public override bool WriteData(WriteBuffer writer)
         {
@@ -48,7 +48,7 @@ namespace MultiK2.Network
                     }
                 }
                 
-                writer.Write((int)OperationCode.DepthFrameTransfer);
+                writer.Write((int)OperationCode.ColorFrameTransfer);
                 writer.Write((int)OperationStatus.PushInit);
                 writer.Write((int)Bitmap.BitmapPixelFormat);
                 writer.Write(Bitmap.PixelWidth);
@@ -59,12 +59,12 @@ namespace MultiK2.Network
                 WriteIntrinsics(writer, CameraIntrinsics);
 
                 // todo write transformation
-                WriteTransformation(writer, DepthToColorTransform);
+                WriteTransformation(writer, ColorToDepthTransform);
 
                 return false;
             }
 
-            writer.Write((int)OperationCode.DepthFrameTransfer);
+            writer.Write((int)OperationCode.ColorFrameTransfer);
             writer.Write((int)OperationStatus.Push);
 
             // just for check?
@@ -106,7 +106,7 @@ namespace MultiK2.Network
                 Bitmap = new SoftwareBitmap(pixelFormat, width, height, BitmapAlphaMode.Ignore);
 
                 CameraIntrinsics = ReadCameraIntrinsics(reader);
-                DepthToColorTransform = ReadTransformation(reader);
+                ColorToDepthTransform = ReadTransformation(reader);
 
                 return false;
             }

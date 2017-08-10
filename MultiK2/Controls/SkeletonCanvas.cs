@@ -11,7 +11,7 @@ using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Shapes;
 
-namespace MultiK2.Xaml
+namespace MultiK2.Controls
 {
     public sealed class SkeletonCanvas : Canvas
     {
@@ -41,10 +41,10 @@ namespace MultiK2.Xaml
                 foreach (var bone in body.CreateSkeleton().Where(bone => bone.TrackingState == TrackingState.Tracked))
                 {
                     var colorSpace = coordinateTransformation(bone.Joint1.Position);
-                                        
+                    /*                    
                     var origColorFramePoint = cameraIntrinsics.OriginalIntrinsics.ProjectOntoFrame(colorSpace);
                     var distortedOrig = cameraIntrinsics.OriginalIntrinsics.DistortPoint(origColorFramePoint);
-
+                    */
                     var colorFramePoint = cameraIntrinsics.ProjectOntoFrame(colorSpace);
                     var unprojectedPoint = cameraIntrinsics.UnprojectFromFrame(colorFramePoint, colorSpace.Z);
 

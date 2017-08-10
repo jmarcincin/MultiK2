@@ -10,32 +10,32 @@ namespace MultiK2
 {
     public sealed class CoordinateMapper
     {
-        private Matrix4x4? _depthToColor;
-        private Matrix4x4? _colorToDepth;
-
         private SpatialCoordinateSystem _depthSystem;
         private SpatialCoordinateSystem _colorSystem;
+        
+        internal Matrix4x4? DepthToColor { get; set; }
+        internal Matrix4x4? ColorToDepth { get; set; }
 
         public Vector3 MapDepthSpacePointToColor(Vector3 depthSpacePoint)
         {
-            if (!_depthToColor.HasValue)
+            if (!DepthToColor.HasValue)
             {
                 throw new InvalidOperationException();
             }
 
             // TODO: throw an excepton if no mapping matrix was set 
-            return Vector3.Transform(depthSpacePoint, _depthToColor.Value);
+            return Vector3.Transform(depthSpacePoint, DepthToColor.Value);
         }
 
         public Vector3 MapColorSpacePointToDepth(Vector3 colorSpacePoint)
         {
-            if (!_colorToDepth.HasValue)
+            if (!ColorToDepth.HasValue)
             {
                 throw new InvalidOperationException();
             }
 
             // TODO: throw an excepton if no mapping matrix was set 
-            return Vector3.Transform(colorSpacePoint, _colorToDepth.Value);
+            return Vector3.Transform(colorSpacePoint, ColorToDepth.Value);
         }
 
         internal void UpdateFromDepth(SpatialCoordinateSystem depthSystem)
@@ -43,8 +43,8 @@ namespace MultiK2
             _depthSystem = depthSystem;
             if (_colorSystem != null)
             {
-                _depthToColor = _depthSystem.TryGetTransformTo(_colorSystem);
-                _colorToDepth = _colorSystem.TryGetTransformTo(_depthSystem);
+                DepthToColor = _depthSystem.TryGetTransformTo(_colorSystem);
+                ColorToDepth = _colorSystem.TryGetTransformTo(_depthSystem);
             } 
         }
 
@@ -53,10 +53,9 @@ namespace MultiK2
             _colorSystem = colorSystem;
             if (_depthSystem != null)
             {
-                _depthToColor = _depthSystem.TryGetTransformTo(_colorSystem);
-                _colorToDepth = _colorSystem.TryGetTransformTo(_depthSystem);
+                DepthToColor = _depthSystem.TryGetTransformTo(_colorSystem);
+                ColorToDepth = _colorSystem.TryGetTransformTo(_depthSystem);
             }
         }
-
     }    
 }
