@@ -54,6 +54,7 @@ namespace MultiK2.Network
                 // TODO: compare protocol versions
 
                 // Start receive loop - TODO: cancellation token
+                Init((IPEndPoint)_connection.RemoteEndPoint);
                 StartReceivingData();
                 StartSendingData();
             }
@@ -69,11 +70,7 @@ namespace MultiK2.Network
             IsConnected = true;
             return true;
         }
-
-        public void CloseConnection()
-        {            
-        }
-
+        
         public Task<INetworkCommandAsync> SendCommandAsync(INetworkCommandAsync command)
         {
             SendRequestCommand(command);
@@ -202,6 +199,27 @@ namespace MultiK2.Network
                             {
                                 Task.Run(() => subs(this, (ColorFramePacket)activeReceive));
                             }
+                        }
+                        break;
+                    }
+                case OperationCode.UserFrameTransfer:
+                    {
+                        FramePacket activeReceive;
+                        if (_activeFrameReceives.TryGetValue(ReaderType.UserDefined, out activeReceive))
+                        {
+                            // todo: verify that operation status is not push init
+                        }
+                        else
+                        {
+                            activeReceive = new CustomFramePacket();
+                            _activeFrameReceives[ReaderType.UserDefined] = activeReceive;
+                        }
+
+                        var finishedReading = activeReceive.ReadData(receiveBuffer);
+                        if (finishedReading)
+                        {
+                            _activeFrameReceives.Remove(ReaderType.UserDefined);
+                            OnCustomDataReceived((CustomFramePacket)activeReceive);
                         }
                         break;
                     }

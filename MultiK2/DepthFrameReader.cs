@@ -58,7 +58,7 @@ namespace MultiK2
                 var frame = sender.TryAcquireLatestFrame();
                 if (frame != null)
                 {
-                    Sensor.GetCoordinateMapper().UpdateFromDepth(frame.CoordinateSystem);
+                    Sensor.GetCoordinateMapper().UpdateFromDepthFrame(frame.CoordinateSystem);
                     var depthArgs = 
                         new DepthFrameArrivedEventArgs(
                             this, 

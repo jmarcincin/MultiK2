@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.26403.0
+VisualStudioVersion = 15.0.26730.10
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MultiK2", "MultiK2\MultiK2.csproj", "{03EB37C6-5BDB-4AE6-9866-9D10935DC355}"
 EndProject
@@ -14,6 +14,10 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MultiK2DesktopSample", "Samples\MultiK2DesktopSample\MultiK2DesktopSample.csproj", "{7635FD57-ACAF-4FF6-A0C1-272CF0C1E32A}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MultiK2DesktopClient", "Samples\MultiK2DesktopClient\MultiK2DesktopClient.csproj", "{F1EC6295-A7CF-4DC9-9BAA-94EA52D10D6E}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{7D15949D-0E72-4199-96D8-76DA2D1F2FE9}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BufferTests", "Tests\BufferTests\BufferTests.csproj", "{13145800-395B-4F7A-ADB0-CCFA03124EA5}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -85,6 +89,24 @@ Global
 		{F1EC6295-A7CF-4DC9-9BAA-94EA52D10D6E}.Release|x64.Build.0 = Release|x64
 		{F1EC6295-A7CF-4DC9-9BAA-94EA52D10D6E}.Release|x86.ActiveCfg = Release|x86
 		{F1EC6295-A7CF-4DC9-9BAA-94EA52D10D6E}.Release|x86.Build.0 = Release|x86
+		{13145800-395B-4F7A-ADB0-CCFA03124EA5}.Debug|ARM.ActiveCfg = Debug|ARM
+		{13145800-395B-4F7A-ADB0-CCFA03124EA5}.Debug|ARM.Build.0 = Debug|ARM
+		{13145800-395B-4F7A-ADB0-CCFA03124EA5}.Debug|ARM.Deploy.0 = Debug|ARM
+		{13145800-395B-4F7A-ADB0-CCFA03124EA5}.Debug|x64.ActiveCfg = Debug|x64
+		{13145800-395B-4F7A-ADB0-CCFA03124EA5}.Debug|x64.Build.0 = Debug|x64
+		{13145800-395B-4F7A-ADB0-CCFA03124EA5}.Debug|x64.Deploy.0 = Debug|x64
+		{13145800-395B-4F7A-ADB0-CCFA03124EA5}.Debug|x86.ActiveCfg = Debug|x86
+		{13145800-395B-4F7A-ADB0-CCFA03124EA5}.Debug|x86.Build.0 = Debug|x86
+		{13145800-395B-4F7A-ADB0-CCFA03124EA5}.Debug|x86.Deploy.0 = Debug|x86
+		{13145800-395B-4F7A-ADB0-CCFA03124EA5}.Release|ARM.ActiveCfg = Release|ARM
+		{13145800-395B-4F7A-ADB0-CCFA03124EA5}.Release|ARM.Build.0 = Release|ARM
+		{13145800-395B-4F7A-ADB0-CCFA03124EA5}.Release|ARM.Deploy.0 = Release|ARM
+		{13145800-395B-4F7A-ADB0-CCFA03124EA5}.Release|x64.ActiveCfg = Release|x64
+		{13145800-395B-4F7A-ADB0-CCFA03124EA5}.Release|x64.Build.0 = Release|x64
+		{13145800-395B-4F7A-ADB0-CCFA03124EA5}.Release|x64.Deploy.0 = Release|x64
+		{13145800-395B-4F7A-ADB0-CCFA03124EA5}.Release|x86.ActiveCfg = Release|x86
+		{13145800-395B-4F7A-ADB0-CCFA03124EA5}.Release|x86.Build.0 = Release|x86
+		{13145800-395B-4F7A-ADB0-CCFA03124EA5}.Release|x86.Deploy.0 = Release|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -93,5 +115,9 @@ Global
 		{ECA9B367-7D1E-44F8-A290-4D56A5C1C886} = {A714A650-32E5-4AFF-BB50-60839CCDBC71}
 		{7635FD57-ACAF-4FF6-A0C1-272CF0C1E32A} = {A714A650-32E5-4AFF-BB50-60839CCDBC71}
 		{F1EC6295-A7CF-4DC9-9BAA-94EA52D10D6E} = {A714A650-32E5-4AFF-BB50-60839CCDBC71}
+		{13145800-395B-4F7A-ADB0-CCFA03124EA5} = {7D15949D-0E72-4199-96D8-76DA2D1F2FE9}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {F3795CB8-EEDF-42C8-897C-304332DB5E85}
 	EndGlobalSection
 EndGlobal

@@ -104,15 +104,18 @@ namespace MultiK2
         {
             return Task.Run(async () =>
             {
-                if (_bodyIndexReader != null)
+                if (_isStarted)
                 {
-                    _bodyIndexReader.FrameArrived -= BodyIndexReader_FrameArrived;
-                    await _bodyIndexReader.StopAsync();
-                }
-                else
-                {
-                    _networkClient.BodyIndexFrameArrived -= NetworkClient_BodyIndexFrameArrived;
-                    await _networkClient.SendCommandAsync(new CloseReader(ReaderType.BodyIndex));
+                    if (_bodyIndexReader != null)
+                    {
+                        _bodyIndexReader.FrameArrived -= BodyIndexReader_FrameArrived;
+                        await _bodyIndexReader.StopAsync();
+                    }
+                    else
+                    {
+                        _networkClient.BodyIndexFrameArrived -= NetworkClient_BodyIndexFrameArrived;
+                        await _networkClient.SendCommandAsync(new CloseReader(ReaderType.BodyIndex));
+                    }
                 }
                 _isStarted = false;
             }).AsAsyncAction();

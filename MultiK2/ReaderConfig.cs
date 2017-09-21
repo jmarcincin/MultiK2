@@ -10,7 +10,15 @@ namespace MultiK2
     public enum ReaderConfig
     {
         Default = 0,
-        Filter = 0x01,
-        HalfResolution = 0x02,
+
+        /// <summary>
+        /// Downsize horizontal & vertical resolution to half. Supported only by Color Frame reader.
+        /// </summary>
+        HalfResolution = 0x01,
+
+        /// <summary>
+        /// NOT SUPPORTED. For future use.
+        /// </summary>
+        HalfRate = 0x02
     }
 }

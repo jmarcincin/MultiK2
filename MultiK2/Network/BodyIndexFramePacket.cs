@@ -17,9 +17,9 @@ namespace MultiK2.Network
 
         public Matrix4x4? DepthToColorTransform { get; private set; }
 
-        public BodyIndexFramePacket(SoftwareBitmap depthBitmap, CameraIntrinsics intrinsics, Matrix4x4? depthToColorTransform) : base(ReaderType.BodyIndex)
+        public BodyIndexFramePacket(SoftwareBitmap bodyIndexBitmap, CameraIntrinsics intrinsics, Matrix4x4? depthToColorTransform) : base(ReaderType.BodyIndex)
         {
-            Bitmap = depthBitmap;
+            Bitmap = bodyIndexBitmap;
             CameraIntrinsics = intrinsics;
             DepthToColorTransform = depthToColorTransform;
         }

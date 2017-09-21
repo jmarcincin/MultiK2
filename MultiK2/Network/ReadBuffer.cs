@@ -94,16 +94,15 @@ namespace MultiK2.Network
             var unprocessedBytesCount = _writeOffset - _readOffset;
 
             if (unprocessedBytesCount > 0)
-            {                
-                /*
+            {  
                 if (remainingCapacity < _maxPacketSize)
                 {
                     // move data in buffer to the beginning
-                    Array.Copy(_buffer, _readOffset, _buffer, 0, notReadCount);
+                    Array.Copy(_buffer, _readOffset, _buffer, 0, unprocessedBytesCount);
                     _packetStartOffset = 0;
                     _readOffset = 0;
-                    _writeOffset = notReadCount;
-                }*/
+                    _writeOffset = unprocessedBytesCount;
+                }
             }
             else
             {

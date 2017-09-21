@@ -8,7 +8,7 @@ using Windows.Storage.Streams;
 
 namespace MultiK2.Network
 {
-    internal enum ReaderType { Audio, Color, Depth, Body, BodyIndex, Infrared, Infrared2 }
+    internal enum ReaderType { Audio, Color, Depth, Body, BodyIndex, Infrared, Infrared2, UserDefined }
 
     internal class OpenReader : INetworkCommandAsync
     {

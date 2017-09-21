@@ -1,4 +1,5 @@
 ﻿using MultiK2.Network;
+using MultiK2.Utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -24,9 +25,10 @@ namespace MultiK2
 
         public ReaderConfig ReaderConfiguration { get; }
 
-        internal ColorFrameReader(Sensor sensor, NetworkClient networkClient)
+        internal ColorFrameReader(Sensor sensor, NetworkClient networkClient, ReaderConfig config)
         {
             Sensor = sensor;
+            ReaderConfiguration = config;
             _networkClient = networkClient;
         }
 
@@ -34,7 +36,6 @@ namespace MultiK2
         {
             Sensor = sensor;
             ReaderConfiguration = config;
-
             _colorReader = colorReader;
         }
 
@@ -59,19 +60,30 @@ namespace MultiK2
             var subscribers = FrameArrived;
             if (subscribers != null)
             {
-                var frame = sender.TryAcquireLatestFrame();
-                if (frame != null)
-                {
-                    Sensor.GetCoordinateMapper().UpdateFromColor(frame.CoordinateSystem);
-                    var colorArgs = 
-                        new ColorFrameArrivedEventArgs(
-                            this,
-                            frame.VideoMediaFrame.SoftwareBitmap,
-                            new CameraIntrinsics(frame.VideoMediaFrame.CameraIntrinsics));
+               Task.Run(() =>
+               {
+                   var frame = sender.TryAcquireLatestFrame();
+                   if (frame != null)
+                   {
+                       Sensor.GetCoordinateMapper().UpdateFromColorFrame(frame.CoordinateSystem);
+                       var bitmap = frame.VideoMediaFrame.SoftwareBitmap;
+                       if (ReaderConfiguration.HasFlag(ReaderConfig.HalfResolution))
+                       {
+                           var original = bitmap;
+                           bitmap = bitmap.Downsize();
+                           original.Dispose();
+                       }
+                                              
+                       var colorArgs =
+                           new ColorFrameArrivedEventArgs(
+                               this,
+                               bitmap,
+                               new CameraIntrinsics(frame.VideoMediaFrame.CameraIntrinsics));
 
-                    subscribers(this, colorArgs);
-                }
-                frame?.Dispose();
+                       subscribers(this, colorArgs);
+                       frame.Dispose();
+                   }                   
+               });
             }
         }
 
@@ -93,7 +105,7 @@ namespace MultiK2
                     }
                     else
                     {
-                        var response = await _networkClient.SendCommandAsync(new OpenReader(ReaderType.Color, ReaderConfig.Default));
+                        var response = await _networkClient.SendCommandAsync(new OpenReader(ReaderType.Color, ReaderConfiguration));
                         if (response.Status == OperationStatus.ResponseSuccess)
                         {
                             _networkClient.ColorFrameArrived += NetworkClient_ColorFrameArrived;
@@ -110,15 +122,18 @@ namespace MultiK2
         {
             return Task.Run(async () =>
             {
-                if (_colorReader != null)
+                if (_isStarted)
                 {
-                    _colorReader.FrameArrived -= ColorReader_FrameArrived;
-                    await _colorReader.StopAsync();
-                }
-                else
-                {
-                    _networkClient.ColorFrameArrived -= NetworkClient_ColorFrameArrived;
-                    await _networkClient.SendCommandAsync(new CloseReader(ReaderType.Color));
+                    if (_colorReader != null)
+                    {
+                        _colorReader.FrameArrived -= ColorReader_FrameArrived;
+                        await _colorReader.StopAsync();
+                    }
+                    else
+                    {
+                        _networkClient.ColorFrameArrived -= NetworkClient_ColorFrameArrived;
+                        await _networkClient.SendCommandAsync(new CloseReader(ReaderType.Color));
+                    }
                 }
                 _isStarted = false;
             }).AsAsyncAction();            

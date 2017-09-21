@@ -10,7 +10,6 @@ using Windows.Media.Capture;
 using Windows.Media.Capture.Frames;
 using Windows.Media.MediaProperties;
 using Windows.Media.Render;
-using Windows.Networking;
 
 namespace MultiK2
 {
@@ -18,19 +17,40 @@ namespace MultiK2
     {
         private static string PoseTrackingSubType = new Guid(0x69232056, 0x2ed9, 0x4d0e, 0x89, 0xcc, 0x5d, 0x27, 0x34, 0xa5, 0x68, 0x8).ToString("B").ToUpper();
         
-        private MediaFrameSourceGroup _sourceGroup;
+        private readonly MediaFrameSourceGroup _sourceGroup;
+        private readonly CoordinateMapper _coordinateMapper = new CoordinateMapper();
+
         private MediaCapture _mediaCapture;
-
-        private ColorFrameReader _colorReader;
-        private DepthFrameReader _depthReader;
-        private BodyIndexFrameReader _bodyIndexReader;
-        private BodyFrameReader _bodyReader;
-        private AudioFrameReader _audioReader;
-
-        private CoordinateMapper _coordinateMapper = new CoordinateMapper();
-
         private NetworkServer _networkServer;
         private NetworkClient _networkClient;
+        
+        internal ColorFrameReader ColorReader { get; private set; }
+        internal DepthFrameReader DepthReader { get; private set; }
+        internal BodyIndexFrameReader BodyIndexReader { get; private set; }
+        internal BodyFrameReader BodyReader { get; private set; }
+        internal AudioFrameReader AudioReader { get; private set; }
+
+        public bool IsActive => _mediaCapture != null || _networkClient != null && _networkClient.IsConnected;
+
+        public SensorType Type { get; private set; }
+
+        public bool AllowRemoteClient { get; set; }
+
+        // todo range check (ushort)
+        public int ServerPort { get; set; } = 8599;
+
+        public event EventHandler<byte[]> UserDefinedDataReceived;
+
+        private Sensor(IPEndPoint remoteEndPoint)
+        {
+            _networkClient = new NetworkClient(remoteEndPoint);
+            Type = SensorType.NetworkClient;
+        }
+
+        private Sensor(MediaFrameSourceGroup kinectMediaGroup)
+        {
+            _sourceGroup = kinectMediaGroup;
+        }
 
         public static IAsyncOperation<Sensor> GetDefaultAsync()
         {
@@ -53,26 +73,6 @@ namespace MultiK2
         {
             return new Sensor(new IPEndPoint(IPAddress.Parse(ipAddress), port));
         }
-                
-        private Sensor(IPEndPoint remoteEndPoint)
-        {
-            _networkClient = new NetworkClient(remoteEndPoint);
-            Type = SensorType.NetworkClient;
-        }
-
-        private Sensor(MediaFrameSourceGroup kinectMediaGroup)
-        {
-            _sourceGroup = kinectMediaGroup;
-        }
-
-        public bool IsActive => _mediaCapture != null || _networkClient != null && _networkClient.IsConnected;
-
-        public SensorType Type { get; private set; }
-
-        public bool AllowRemoteClient { get; set; }
-
-        // todo range check (ushort)
-        public int ServerPort { get; set; } = 8599;
 
         public IAsyncAction OpenAsync()
         {
@@ -96,44 +96,54 @@ namespace MultiK2
                     if (Type == SensorType.NetworkServer && _networkServer == null)
                     {
                         _networkServer = new NetworkServer(this);
-                        await _networkServer.StartListener();
+                        _networkServer.ConnectionEstablished += NetworkConnectionEstablished;
+                        _networkServer.ConnectionClosed += NetworkConnectionClosed;
+                        _networkServer.CustomDataReceived += NetworkCustomDataReceived;
+                        _networkServer.StartListener();
+                        
                     }
                 }
                 else
                 {
+                    _networkClient.ConnectionEstablished += NetworkConnectionEstablished;
+                    _networkClient.ConnectionClosed += NetworkConnectionClosed;
+                    _networkClient.CustomDataReceived += NetworkCustomDataReceived;
                     await _networkClient.OpenNetworkAsync();
                 }              
             }).AsAsyncAction();
         }
-
+        
         public IAsyncAction CloseAsync()
         {
             return Task.Run(async () =>
             {
-                await _bodyIndexReader?.CloseAsync();
-                _bodyIndexReader?.Dispose();
-                _bodyIndexReader = null;
+                await BodyIndexReader?.CloseAsync();
+                BodyIndexReader?.Dispose();
+                BodyIndexReader = null;
 
-                await _bodyReader?.CloseAsync();
-                _bodyReader?.Dispose();
-                _bodyReader = null;
+                await BodyReader?.CloseAsync();
+                BodyReader?.Dispose();
+                BodyReader = null;
 
-                await _colorReader?.CloseAsync();
-                _colorReader?.Dispose();
-                _colorReader = null;
+                await ColorReader?.CloseAsync();
+                ColorReader?.Dispose();
+                ColorReader = null;
 
-                await _depthReader?.CloseAsync();
-                _depthReader?.Dispose();
-                _depthReader = null;
+                await DepthReader?.CloseAsync();
+                DepthReader?.Dispose();
+                DepthReader = null;
 
-                _audioReader?.Close();
-                _audioReader?.Dispose();
-                _audioReader = null;
+                AudioReader?.Close();
+                AudioReader?.Dispose();
+                AudioReader = null;
 
                 _mediaCapture?.Dispose();
                 _mediaCapture = null;
-                
+
+                _networkClient?.CloseConnection();
                 _networkClient = null;
+
+                _networkServer?.CloseConnection();
                 _networkServer = null;                
             }).AsAsyncAction();
         }
@@ -147,11 +157,11 @@ namespace MultiK2
         {
             return Task.Run(async () =>
             {
-                if (_colorReader == null)
+                if (ColorReader == null)
                 {
                     if (Type == SensorType.NetworkClient)
                     {
-                        _colorReader = new ColorFrameReader(this, _networkClient);
+                        ColorReader = new ColorFrameReader(this, _networkClient, config);
                     }
                     else
                     {
@@ -162,13 +172,13 @@ namespace MultiK2
                             if (_mediaCapture.FrameSources.TryGetValue(colorSourceInfo.Id, out colorSource))
                             {
                                 var colorMediaReader = await _mediaCapture.CreateFrameReaderAsync(colorSource);
-                                _colorReader = new ColorFrameReader(this, colorMediaReader, config);
+                                ColorReader = new ColorFrameReader(this, colorMediaReader, config);
                             }
                         }
                     }
                 }
-                await _colorReader?.OpenAsync();
-                return _colorReader;
+                await ColorReader?.OpenAsync();
+                return ColorReader;
             }).AsAsyncOperation();
         }
 
@@ -176,11 +186,11 @@ namespace MultiK2
         {
             return Task.Run(async () =>
             {
-                if (_depthReader == null)
+                if (DepthReader == null)
                 {
                     if (Type == SensorType.NetworkClient)
                     {
-                        _depthReader = new DepthFrameReader(this, _networkClient);
+                        DepthReader = new DepthFrameReader(this, _networkClient);
                     }
                     else
                     {
@@ -191,13 +201,13 @@ namespace MultiK2
                             if (_mediaCapture.FrameSources.TryGetValue(depthSourceInfo.Id, out depthSource))
                             {
                                 var depthMediaReader = await _mediaCapture.CreateFrameReaderAsync(depthSource);
-                                _depthReader = new DepthFrameReader(this, depthMediaReader);
+                                DepthReader = new DepthFrameReader(this, depthMediaReader);
                             }
                         }
                     }
                 }
-                await _depthReader?.OpenAsync();
-                return _depthReader;
+                await DepthReader?.OpenAsync();
+                return DepthReader;
             }).AsAsyncOperation();
         }
 
@@ -205,11 +215,11 @@ namespace MultiK2
         {
             return Task.Run(async () =>
             {
-                if (_bodyIndexReader == null)
+                if (BodyIndexReader == null)
                 {
                     if (Type == SensorType.NetworkClient)
                     {
-                        _bodyIndexReader = new BodyIndexFrameReader(this, _networkClient);
+                        BodyIndexReader = new BodyIndexFrameReader(this, _networkClient);
                     }
                     else
                     {
@@ -222,14 +232,14 @@ namespace MultiK2
                             customSource.CurrentFormat.Subtype == "L8")
                             {
                                 var bodyIndexMediaReader = await _mediaCapture.CreateFrameReaderAsync(customSource);
-                                _bodyIndexReader = new BodyIndexFrameReader(this, bodyIndexMediaReader);
+                                BodyIndexReader = new BodyIndexFrameReader(this, bodyIndexMediaReader);
                                 break;
                             }
                         }
                     }
                 }
-                await _bodyIndexReader?.OpenAsync();
-                return _bodyIndexReader;
+                await BodyIndexReader?.OpenAsync();
+                return BodyIndexReader;
             }).AsAsyncOperation();
         }
 
@@ -237,11 +247,11 @@ namespace MultiK2
         {   
             return Task.Run(async () =>
             {
-                if (_bodyReader == null)
+                if (BodyReader == null)
                 {
                     if (Type == SensorType.NetworkClient)
                     {
-                        _bodyReader = new BodyFrameReader(this, _networkClient);
+                        BodyReader = new BodyFrameReader(this, _networkClient);
                     }
                     else
                     {
@@ -254,14 +264,14 @@ namespace MultiK2
                             customSource.CurrentFormat.Subtype == PoseTrackingSubType)
                             {
                                 var bodyMediaReader = await _mediaCapture.CreateFrameReaderAsync(customSource);
-                                _bodyReader = new BodyFrameReader(this, bodyMediaReader);
+                                BodyReader = new BodyFrameReader(this, bodyMediaReader);
                                 break;
                             }
                         }
                     }
                 }
-                await _bodyReader?.OpenAsync();
-                return _bodyReader;
+                await BodyReader?.OpenAsync();
+                return BodyReader;
             }).AsAsyncOperation();
         }
 
@@ -269,7 +279,7 @@ namespace MultiK2
         {   
             return Task.Run(async () =>
             {
-                if (_audioReader == null)
+                if (AudioReader == null)
                 {   
                     var microphones = await DeviceInformation.FindAllAsync(DeviceInformation.GetAqsFilterFromDeviceClass(DeviceClass.AudioCapture));
                     var kinectMicArray = microphones.FirstOrDefault(mic => mic.Name.ToLowerInvariant().Contains("xbox nui sensor"));
@@ -291,14 +301,49 @@ namespace MultiK2
                             if (inputNodeResult.Status == AudioDeviceNodeCreationStatus.Success)
                             {
                                 var output = audioGraphResult.Graph.CreateFrameOutputNode(audioGraphResult.Graph.EncodingProperties);
-                                _audioReader = new AudioFrameReader(audioGraphResult.Graph, output);
+                                AudioReader = new AudioFrameReader(audioGraphResult.Graph, output);
                             }
                         }
                     }
                 }
-                _audioReader?.Open();
-                return _audioReader;
+                AudioReader?.Open();
+                return AudioReader;
             }).AsAsyncOperation();
+        }
+
+        public void SendUserDefinedData(byte[] data)
+        {
+            if (data == null)
+            {
+                throw new ArgumentNullException(nameof(data));
+            }
+
+            if (_networkClient != null)
+            {
+                _networkClient.SendCustomFrameData(data);
+            }
+            else if (_networkServer != null)
+            {
+                _networkServer.SendCustomFrameData(data);
+            }
+            else
+            {
+                throw new InvalidOperationException("Operation is supported only with network sensor in role of server or client");
+            }
+        }
+
+        private void NetworkCustomDataReceived(object sender, byte[] e)
+        {
+            UserDefinedDataReceived?.Invoke(this, e);
+        }
+
+        private void NetworkConnectionClosed(object sender, bool e)
+        {
+            // TODO: handle also mediacapture state change?
+        }
+
+        private void NetworkConnectionEstablished(object sender, IPEndPoint e)
+        {
         }
     }    
 }

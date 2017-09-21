@@ -7,9 +7,9 @@ namespace MultiK2.Network
 {
     internal class ColorFramePacket : FramePacket
     {
-        // todo validate if depth data length is always in multiples of 8
-        private byte[] _data;                
+        private int _dataCapacity;
         private int _offset;
+        private bool _init = true;
 
         public SoftwareBitmap Bitmap { get; private set; }
 
@@ -17,9 +17,9 @@ namespace MultiK2.Network
 
         public Matrix4x4? ColorToDepthTransform { get; private set; }
 
-        public ColorFramePacket(SoftwareBitmap depthBitmap, CameraIntrinsics intrinsics, Matrix4x4? colorToDepthTransform) : base(ReaderType.Color)
+        public ColorFramePacket(SoftwareBitmap colorBitmap, CameraIntrinsics intrinsics, Matrix4x4? colorToDepthTransform) : base(ReaderType.Color)
         {
-            Bitmap = depthBitmap;
+            Bitmap = colorBitmap;
             CameraIntrinsics = intrinsics;
             ColorToDepthTransform = colorToDepthTransform;
         }
@@ -28,38 +28,27 @@ namespace MultiK2.Network
 
         public override bool WriteData(WriteBuffer writer)
         {
-            if (_data == null)
+            if (_init)
             {
-                using (var buffer = Bitmap.LockBuffer(BitmapBufferAccessMode.Read))
-                using (var bufferRef = buffer.CreateReference())
-                {
-                    unsafe
-                    {
-                        byte* bufferPtr;
-                        uint bufferCapacity;
-                        ((IMemoryBufferByteAccess)bufferRef).GetBuffer(out bufferPtr, out bufferCapacity);
+                // downsize?
+                // Bitmap = Bitmap.Downsize();
 
-                        _data = new byte[bufferCapacity];
+                // todo: handle different pixelformats
+                _dataCapacity = Bitmap.PixelHeight * Bitmap.PixelWidth * 2;
 
-                        fixed (byte* dataPtr = _data)
-                        {
-                            DataManipulation.Copy(bufferPtr, dataPtr, bufferCapacity);
-                        }
-                    }
-                }
-                
                 writer.Write((int)OperationCode.ColorFrameTransfer);
                 writer.Write((int)OperationStatus.PushInit);
                 writer.Write((int)Bitmap.BitmapPixelFormat);
                 writer.Write(Bitmap.PixelWidth);
                 writer.Write(Bitmap.PixelHeight);
-                writer.Write(_data.Length);
+                writer.Write(_dataCapacity);
 
                 // camera intrinsics
                 WriteIntrinsics(writer, CameraIntrinsics);
 
-                // todo write transformation
+                // write transformation
                 WriteTransformation(writer, ColorToDepthTransform);
+                _init = false;
 
                 return false;
             }
@@ -71,25 +60,30 @@ namespace MultiK2.Network
             writer.Write(_offset);
 
             // todo configurable chunks size support
-            var dataChunkSize = Math.Min(_data.Length - _offset, writer.RemainingPacketWriteCapacity - 4);
-            writer.Write(dataChunkSize);
-
             // account for 4 bytes taken by chunkSize info!!
+            var dataChunkSize = Math.Min(_dataCapacity - _offset, writer.RemainingPacketWriteCapacity - 4);
+            writer.Write(dataChunkSize);
 
             int writeOffset;
             writer.ReserveForWrite(dataChunkSize, out writeOffset);
             unsafe
             {
-                var buffer = writer.GetBuffer();
-                fixed (byte* bufferPtr = buffer)
-                fixed (byte* dataSourcePtr = _data)
+                using (var bitBuffer = Bitmap.LockBuffer(BitmapBufferAccessMode.Read))
+                using (var bufferRef = bitBuffer.CreateReference())
                 {
-                    DataManipulation.Copy(dataSourcePtr + _offset, bufferPtr + writeOffset, (uint)dataChunkSize);
+                    byte* dataSourcePtr;
+                    uint bufferCapacity;
+                    ((IMemoryBufferByteAccess)bufferRef).GetBuffer(out dataSourcePtr, out bufferCapacity);
+
+                    var buffer = writer.GetBuffer();
+                    fixed (byte* bufferPtr = buffer)
+                    {
+                        DataManipulation.Copy(dataSourcePtr + _offset, bufferPtr + writeOffset, (uint)dataChunkSize);
+                    }
                 }
             }
-            
             _offset += dataChunkSize;
-            return _offset == _data.Length;
+            return _offset == _dataCapacity;
         }
 
         public override bool ReadData(ReadBuffer reader)

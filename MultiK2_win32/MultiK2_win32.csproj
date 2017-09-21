@@ -130,6 +130,9 @@
     <Compile Include="..\MultiK2\Network\ColorFramePacket.cs">
       <Link>Network\ColorFramePacket.cs</Link>
     </Compile>
+    <Compile Include="..\MultiK2\Network\CustomFramePacket.cs">
+      <Link>Network\CustomFramePacket.cs</Link>
+    </Compile>
     <Compile Include="..\MultiK2\Network\DepthFramePacket.cs">
       <Link>Network\DepthFramePacket.cs</Link>
     </Compile>
@@ -217,8 +220,14 @@
     <Compile Include="..\MultiK2\Tracking\TrackingState.cs">
       <Link>Tracking\TrackingState.cs</Link>
     </Compile>
+    <Compile Include="..\MultiK2\Utils\CompressionHelper.cs">
+      <Link>Utils\CompressionHelper.cs</Link>
+    </Compile>
     <Compile Include="..\MultiK2\Utils\DataManipulation.cs">
       <Link>Utils\DataManipulation.cs</Link>
+    </Compile>
+    <Compile Include="..\MultiK2\Utils\ImageManipulation.cs">
+      <Link>Utils\ImageManipulation.cs</Link>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

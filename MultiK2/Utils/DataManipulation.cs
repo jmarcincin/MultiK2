@@ -35,9 +35,12 @@ namespace MultiK2.Utils
                 for (var i = 0; i < simdCopies; i++)
                 {
                     targetVec[i] = sourceVec[i];
-                    targetVec[++i] = sourceVec[i];
-                    targetVec[++i] = sourceVec[i];
-                    targetVec[++i] = sourceVec[i];
+                    i++;
+                    targetVec[i] = sourceVec[i];
+                    i++;
+                    targetVec[i] = sourceVec[i];
+                    i++;
+                    targetVec[i] = sourceVec[i];
                 }
             }
 

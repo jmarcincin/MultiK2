@@ -112,7 +112,7 @@ namespace MultiK2Sample
                     _bodies,
                     _colorCameraIntrinsics,
                     p => coordinateMapper.MapDepthSpacePointToColor(p));
-
+                
                 DepthSkeletonOutput.FillBodies(
                     _bodies,
                     _depthCameraIntrinsics,
@@ -165,22 +165,23 @@ namespace MultiK2Sample
             {
                 //_kinectSensor.AllowRemoteClient = true;
                 await _kinectSensor.OpenAsync();
-
-                _colorReader = await _kinectSensor.OpenColorFrameReaderAsync();
-                _depthReader = await _kinectSensor.OpenDepthFrameReaderAsync();
-                _bodyIndexReader = await _kinectSensor.OpenBodyIndexFrameReaderAsync();
-                _bodyReader = await _kinectSensor.OpenBodyFrameReaderAsync();
                 
-                /* network connection testing
-                _clientSensor = Sensor.CreateNetworkSensor("127.0.0.1", 8599);
-                await _clientSensor.OpenAsync();
-
-                _colorReader = await _clientSensor.OpenColorFrameReaderAsync();
-                _depthReader = await _clientSensor.OpenDepthFrameReaderAsync();
-                _bodyIndexReader = await _clientSensor.OpenBodyIndexFrameReaderAsync();
-                _bodyReader = await _clientSensor.OpenBodyFrameReaderAsync();
+                _colorReader = await _kinectSensor.OpenColorFrameReaderAsync(ReaderConfig.HalfResolution);
+                _depthReader = await _kinectSensor.OpenDepthFrameReaderAsync();
+                /*_bodyIndexReader = await _kinectSensor.OpenBodyIndexFrameReaderAsync();
+                _bodyReader = await _kinectSensor.OpenBodyFrameReaderAsync();
                 */
 
+                // network connection testing
+                //_clientSensor = Sensor.CreateNetworkSensor("127.0.0.1", 8599);
+                //_clientSensor = Sensor.CreateNetworkSensor("10.122.1.2", 8599);
+                //await _clientSensor.OpenAsync();
+
+                //_colorReader = await _clientSensor.OpenColorFrameReaderAsync(ReaderConfig.HalfResolution);
+                //_depthReader = await _clientSensor.OpenDepthFrameReaderAsync();
+                //_bodyIndexReader = await _clientSensor.OpenBodyIndexFrameReaderAsync();
+                //_bodyReader = await _clientSensor.OpenBodyFrameReaderAsync();
+                
                 if (_depthReader != null)
                 {
                     DepthOutput.Source = new SoftwareBitmapSource();

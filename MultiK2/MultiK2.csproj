@@ -104,8 +104,10 @@
     <Compile Include="CameraIntrinsics.cs" />
     <Compile Include="CoordinateMapper.cs" />
     <Compile Include="Network\BodyFramePacket.cs" />
+    <Compile Include="Network\CustomFramePacket.cs" />
     <Compile Include="Network\ColorFramePacket.cs" />
     <Compile Include="Network\BodyIndexFramePacket.cs" />
+    <Compile Include="Utils\CompressionHelper.cs" />
     <Compile Include="Network\INetworkCommandAsync.cs" />
     <Compile Include="Network\NetworkBase.cs" />
     <Compile Include="Network\ReadBuffer.cs" />
@@ -141,6 +143,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Utils\DataManipulation.cs" />
     <Compile Include="Controls\SkeletonCanvas.cs" />
+    <Compile Include="Utils\ImageManipulation.cs" />
     <EmbeddedResource Include="Properties\MultiK2.rd.xml" />
   </ItemGroup>
   <ItemGroup />

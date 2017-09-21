@@ -19,11 +19,12 @@ namespace MultiK2DesktopSample
             // TODO: rewrite using async/await
 
             sensor.AllowRemoteClient = true;
+            
             sensor.OpenAsync().AsTask().Wait();
 
             Console.WriteLine($"Kinect sensor running in {sensor.Type} mode");
             
-            var clientSensor = Sensor.CreateNetworkSensor("127.0.0.1", 8599);
+            //var clientSensor = Sensor.CreateNetworkSensor("127.0.0.1", 8599);
 
             /*
             Console.WriteLine($"Kinect sensor 2 set-up in {clientSensor.Type} mode");

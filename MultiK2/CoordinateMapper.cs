@@ -38,7 +38,7 @@ namespace MultiK2
             return Vector3.Transform(colorSpacePoint, ColorToDepth.Value);
         }
 
-        internal void UpdateFromDepth(SpatialCoordinateSystem depthSystem)
+        internal void UpdateFromDepthFrame(SpatialCoordinateSystem depthSystem)
         {
             _depthSystem = depthSystem;
             if (_colorSystem != null)
@@ -48,7 +48,7 @@ namespace MultiK2
             } 
         }
 
-        internal void UpdateFromColor(SpatialCoordinateSystem colorSystem)
+        internal void UpdateFromColorFrame(SpatialCoordinateSystem colorSystem)
         {
             _colorSystem = colorSystem;
             if (_depthSystem != null)
